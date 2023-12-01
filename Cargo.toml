@@ -1,0 +1,7 @@
+[package]
+name = "charting_tools"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+robotics_lib = {registry = "kellnr"}
