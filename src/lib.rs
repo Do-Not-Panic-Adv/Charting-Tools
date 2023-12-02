@@ -1,5 +1,6 @@
 mod charted_map;
 mod charted_coordinate;
+mod graph;
 
 use robotics_lib::interface::Tools;
 
