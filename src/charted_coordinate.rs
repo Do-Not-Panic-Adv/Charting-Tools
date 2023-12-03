@@ -1,4 +1,6 @@
 use std::fmt::{Display, Formatter};
+use std::ops::{Add, Sub};
+
 use robotics_lib::world::coordinates::Coordinate;
 
 #[derive(Clone, Debug)]
@@ -53,5 +55,61 @@ impl Display for ChartedCoordinate {
 impl ChartedCoordinate {
     pub fn new(row: usize, col: usize) -> Self {
         Self(row, col)
+    }
+
+    pub fn get_row(&self) -> usize {
+        self.0
+    }
+
+    pub fn get_col(&self) -> usize {
+        self.1
+    }
+}
+
+impl Add for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl Add<Coordinate> for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn add(self, rhs: Coordinate) -> Self::Output {
+        Self(self.0 + rhs.get_row(), self.1 + rhs.get_col())
+    }
+}
+
+impl Add<(usize, usize)> for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn add(self, rhs: (usize, usize)) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl Sub for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl Sub<Coordinate> for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn sub(self, rhs: Coordinate) -> Self::Output {
+        Self(self.0 - rhs.get_row(), self.1 - rhs.get_col())
+    }
+}
+
+impl Sub<(usize, usize)> for ChartedCoordinate {
+    type Output = ChartedCoordinate;
+
+    fn sub(self, rhs: (usize, usize)) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
     }
 }

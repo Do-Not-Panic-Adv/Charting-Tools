@@ -79,7 +79,7 @@ impl MapKey for TileType {
 ///
 /// ## Examples
 ///
-///     let mut cm = ChartingTools::new::<Tile>();
+///     let mut cm = ChartingTools::tool::<ChartedMap>();
 ///
 ///     let my_tile = robotics_lib::interface::robot_view(&my_robot, &my_world);
 ///     let my_coordinate = &ChartedCoordinate::from(my_robot.get_coordinate);
