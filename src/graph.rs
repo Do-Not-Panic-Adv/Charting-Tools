@@ -1,23 +1,68 @@
 use std::collections::HashMap;
-use petgraph::graph::UnGraph;
+use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
-use petgraph::adj::NodeIndex;
 use petgraph::algo::dijkstra;
 use petgraph::dot::{Config, Dot};
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::tile::{Content, Tile, TileType};
-
 /// Purpose of this function is to take as input an Option<Vec<Vec<Option<Tile>>>> (output of robot_map)
 /// and return a weighted graph of connected tiles (meaning tiles in which go_allowed() is true).
 ///
+
+
+struct PathFinder{
+    graph:Graph<(usize, usize), u32, Undirected>,
+    indexes: Vec<Vec<Option<NodeIndex>>>,
+}
 
 fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
     return 1;
 }
 
+fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize,indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph::<(usize,usize), u32>, teleports:&mut Vec<NodeIndex>){
+    // takes matrix as a reference of the robot map and the dimension of the map.
+    // creates a graph with the walkable seen nodes,
+    // changes the matrix of Nodeindexes of the pathfinder that will be used to retrieve graph Indexes
+    // add the teleports NodeIndexes
+    for i in  0..dim{
+        let mut row: Vec<Option<NodeIndex>> = Vec::with_capacity(dim);
+        for j in 0..dim{
+            match matrix[i][j].as_ref() {
+                // check if the robot discovered that Tile
+                None => {
+                    row.push(None);
+                }
+                Some(present_tile) => {
+                    // this checks if the robot walked over the tile or if he has
+                    // seen it.
+                    if !present_tile.tile_type.properties().walk(){
+                        // Since the vector contains also Tiles that the robot has seen
+                        // we have to check if the tile we are looking at is walkable or not
+                        // if not i don't need it in the graph but i still need in indexes
+                        // to keep the matrix dimxdim
+                        row.push(None);
+                        continue;
+                    }
 
-fn into_graph(robot_map: Option<Vec<Vec<Option<Tile>>>>) -> Graph<(usize, usize), u32, Undirected> {
-    let mut graph= UnGraph::<(usize,usize), u32>::new_undirected();
+                    let current_node=graph.add_node((i, j));
+                    if present_tile.tile_type == TileType::Teleport(true){
+                        teleports.push(current_node);
+                    }
+                    row.push(Some(current_node));
+                }
+            }
+        }
+        indexes.push(row);
+    }
+}
+
+
+fn into_graph(robot_map: &Option<Vec<Vec<Option<Tile>>>>) -> PathFinder {
+    let mut pathfinder = PathFinder{
+        graph: UnGraph::<(usize,usize), u32>::new_undirected(),
+        indexes: Vec::new(),
+    };
+
     let mut teleports= Vec::new();
 
     match robot_map {
@@ -28,60 +73,46 @@ fn into_graph(robot_map: Option<Vec<Vec<Option<Tile>>>>) -> Graph<(usize, usize)
 
             let dimension=vec.len(); //the world is a square
 
+            adds_nodes(&vec, dimension, &mut pathfinder.indexes, &mut pathfinder.graph, &mut teleports);
+            //println!("INDEXES: {:?}", pathfinder.indexes);
+            //println!("ORIGINAL: {:?}", vec);
+
+            // Add vertices
             for i in 0..dimension{
                 for j in 0..dimension{
 
                     // check if the robot discovered that Tile
-                    match vec[i][j].as_ref() {
+                    match pathfinder.indexes[i][j].as_ref() {
                         None => {}
                         Some(present_tile) => {
                             // this checks if the robot walked over the tile or if he has
-                            // seen it.
-
-                            if !present_tile.tile_type.properties().walk(){
-                                // Since the vector contains also Tiles that the robot has seen
-                                // we have to check if the tile we are looking at is walkable or not
-                                // if not i don't need it in the graph
-                                continue;
-                            }
-
-                            let current_node=graph.add_node((i, j));
-
-                            if present_tile.tile_type == TileType::Teleport(true){
-                                teleports.push(current_node);
-                            }
-
+                            // seen it. but it also checks the walkability, since, not walkable
+                            // nodes have not been added
 
                             // CHECK RIGHT NODE
                             if j!=dimension-1 { // border check
-                                match vec[i][j+1].as_ref(){
+                                match pathfinder.indexes[i][j+1].as_ref(){
                                     None => {}
                                     Some(next_tile) => {
                                         // this checks if the robot walked over the tile or if he has
                                         // seen it.
-                                        if !present_tile.tile_type.properties().walk(){
-                                            // Since the vector contains also Tiles that the robot has seen
-                                            // we have to check if the tile we are looking at is walkable or not
-                                            // if not i don't need it in the graph
-                                            continue;
-                                        }
-
-                                        let next_node=graph.add_node((i,j+1));
-                                        graph.add_edge(current_node,next_node,
+                                        pathfinder.graph.add_edge(*present_tile,
+                                                                  *next_tile,
                                                        eval_weight((i,j),(i,j+1)));
                                     }
                                 }
                             }
-
                             // CHECK NODE BELOW
                             if i!=dimension-1{ // bordere check
-                                match vec[i+1][j].as_ref(){
+                                match pathfinder.indexes[i+1][j].as_ref(){
                                     None => {}
                                     Some(next_tile) => {
-                                        // again if is Some then is walkable so i can add this node
-                                        // and create the edge
-                                        let next_node=graph.add_node((i+1,j));
-                                        graph.add_edge(current_node,next_node,
+                                        // this checks if the robot walked over the tile or if he has
+                                        // seen it. but it also checks the walkability, since, not walkable
+                                        // nodes have not been added
+
+                                        pathfinder.graph.add_edge(*present_tile,
+                                                                  *next_tile,
                                                        eval_weight((i,j),(i+1,j)));
                                     }
                                 }
@@ -95,13 +126,13 @@ fn into_graph(robot_map: Option<Vec<Vec<Option<Tile>>>>) -> Graph<(usize, usize)
 
     for (index,current_teleport) in teleports.iter().enumerate(){
         for i in index+1..teleports.len()-1{
-            let c1=graph.node_weight(*current_teleport).unwrap();
-            let c2=graph.node_weight(teleports[i+1]).unwrap();
-            graph.add_edge(*current_teleport,teleports[i+1], eval_weight(*c1,*c2));
+            let c1=pathfinder.graph.node_weight(*current_teleport).unwrap();
+            let c2=pathfinder.graph.node_weight(teleports[i+1]).unwrap();
+            pathfinder.graph.add_edge(*current_teleport,teleports[i+1], eval_weight(*c1,*c2));
         }
     }
 
-    graph
+    pathfinder
 
 }
 
@@ -179,9 +210,9 @@ fn test_into_graph_v1(){
 
     for i in 0..5{
         let mut row_vector= Vec::new();
-        for i in 0..5{
+        for j in 0..5{
             if i==2 || i==4{
-                row_vector.push(Some(not_walkable.clone())); //t10 -->t14
+                row_vector.push(Some(not_walkable.clone())); //t10 -->t14 && t20 -->t24
             }
             else{
                 row_vector.push(Some(walkable.clone()));
@@ -196,11 +227,13 @@ fn test_into_graph_v1(){
     set_tile_type!(robot_map, 1, 2, TileType::Teleport(true)); //t7
     set_tile_type!(robot_map, 3, 4, TileType::Teleport(true)); //t18
 
-    let graph=into_graph(Some(robot_map));
+    println!("Robot map: {:?}", robot_map);
 
-    let start_node=find_node_by_data(&graph, (0,0)).unwrap();
-    let target_node = find_node_by_data(&graph, (0,4)).unwrap();
-    let result= dijkstra(&graph, start_node, None, |e| *e.weight());
-    let cost=result.get(&target_node).unwrap_or(&1000);
-    println!("Il costo da (0,0) a (0,4) e': {:?}", cost);
+    let pathfinder=into_graph(&Some(robot_map));
+    println!("The converted graph is: {:?}", pathfinder.graph);
+
+    let result = dijkstra(&pathfinder.graph,pathfinder.indexes[0][0].unwrap(), pathfinder.indexes[0][4], |e| *e.weight());
+
+    let cost=result.get(&pathfinder.indexes[0][4].unwrap()).unwrap_or(&1000);
+    println!("The cost from (0,0) to (0,4) is: {:?}", cost);
 }
