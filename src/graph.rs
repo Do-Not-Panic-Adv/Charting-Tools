@@ -1,10 +1,7 @@
-use std::ffi::c_ushort;
-use std::u32::MAX;
 use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::worldgenerator::check_world;
 
 
 /// -----Welcome to the Pathfinder!-----
@@ -87,7 +84,7 @@ impl PathFinder{
                     None => {}
                     Some(present_tile) => {
                         // this checks if the robot walked over the tile or if he has
-                        // seen it. but it also checks the walkability, since, not walkable
+                        // seen it. but it also checks the walk-ability, since, not walkable
                         // nodes have not been added
 
                         // CHECK RIGHT NODE
@@ -104,12 +101,12 @@ impl PathFinder{
                             }
                         }
                         // CHECK NODE BELOW
-                        if i!=dimension-1{ // bordere check
+                        if i!=dimension-1{ // border check
                             match pathfinder.indexes[i+1][j].as_ref(){
                                 None => {}
                                 Some(next_tile) => {
                                     // this checks if the robot walked over the tile or if he has
-                                    // seen it. but it also checks the walkability, since, not walkable
+                                    // seen it. but it also checks the walk-ability, since, not walkable
                                     // nodes have not been added
 
                                     pathfinder.graph.add_edge(*present_tile,
@@ -158,12 +155,12 @@ impl PathFinder{
                              |e| *e.weight(),
                              |_| 0
         );
-        match path_info{
+        return match path_info {
             None => {
-                return None
+                None
             }
             Some(info) => {
-                return Some(info.0)
+                Some(info.0)
             }
         }
     }
@@ -226,10 +223,10 @@ impl PathFinder{
         }
         result
     }
-    fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize,indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph::<(usize,usize), u32>, teleports:&mut Vec<(usize,usize)>){
+    fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize, indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph<(usize, usize), u32>, teleports:&mut Vec<(usize, usize)>){
         // takes matrix as a reference of the robot map and the dimension of the map.
         // creates a graph with the walkable seen nodes,
-        // changes the matrix of Nodeindexes of the pathfinder that will be used to retrieve graph Indexes
+        // changes the matrix of Node-indexes of the pathfinder that will be used to retrieve graph Indexes
         // add the teleports NodeIndexes
         for i in  0..dim{
             let mut row: Vec<Option<NodeIndex>> = Vec::with_capacity(dim);
@@ -246,7 +243,7 @@ impl PathFinder{
                             // Since the vector contains also Tiles that the robot has seen
                             // we have to check if the tile we are looking at is walkable or not
                             // if not i don't need it in the graph but i still need in indexes
-                            // to keep the matrix dimxdim
+                            // to keep the matrix dim x dim
                             row.push(None);
                             continue;
                         }
@@ -264,48 +261,6 @@ impl PathFinder{
     }
 
 }
-
-#[test]
-fn test_library_usage(){
-    let mut graph= UnGraph::<(usize,usize), u32>::new_undirected();
-    let coordiante_1= (0,0);
-    let coordiante_2= (0,1);
-    let coordiante_3= (1,0);
-    let coordiante_4= (1,1);
-    let coordiante_5= (2,0);
-    let coordiante_6= (2,1);
-
-    let node_1= graph.add_node(coordiante_1);
-    let node_2= graph.add_node(coordiante_2);
-    let node_3= graph.add_node(coordiante_3);
-    let node_4= graph.add_node(coordiante_4);
-    let node_5= graph.add_node(coordiante_5);
-    let node_6= graph.add_node(coordiante_6);
-
-    graph.add_edge(node_1, node_2, eval_weight(coordiante_1,coordiante_2));
-    graph.add_edge(node_1, node_3, eval_weight(coordiante_1,coordiante_3));
-    graph.add_edge(node_2, node_4, eval_weight(coordiante_2,coordiante_4));
-    graph.add_edge(node_3, node_4, eval_weight(coordiante_3,coordiante_4));
-    graph.add_edge(node_3, node_5, eval_weight(coordiante_3,coordiante_5));
-    graph.add_edge(node_5, node_6, eval_weight(coordiante_5,coordiante_6));
-    graph.add_edge(node_4, node_4, eval_weight(coordiante_4,coordiante_6));
-
-    // Print the graph in DOT format
-    //println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
-
-    let start_node = node_1;
-    let target_node = node_6;
-
-    let result= dijkstra(&graph, start_node, None, |e| *e.weight());
-    let cost=result.get(&target_node).unwrap();
-
-    //println!("Il costo da (0,0) a (2,1) e': {:?}", cost); //3 step because robot walk diagonally.
-
-    assert_eq!(*cost,3u32);
-
-}
-
-
 
 // ----------------Test usage only------------------------
 macro_rules! set_tile_type {
