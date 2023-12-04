@@ -19,7 +19,7 @@ fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
     return 1;
 }
 
-fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize,indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph::<(usize,usize), u32>, teleports:&mut Vec<NodeIndex>){
+fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize,indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph::<(usize,usize), u32>, teleports:&mut Vec<(usize,usize)>){
     // takes matrix as a reference of the robot map and the dimension of the map.
     // creates a graph with the walkable seen nodes,
     // changes the matrix of Nodeindexes of the pathfinder that will be used to retrieve graph Indexes
@@ -46,7 +46,7 @@ fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize,indexes:&mut Vec<Vec<Opt
 
                     let current_node=graph.add_node((i, j));
                     if present_tile.tile_type == TileType::Teleport(true){
-                        teleports.push(current_node);
+                        teleports.push((i,j));
                     }
                     row.push(Some(current_node));
                 }
@@ -125,10 +125,11 @@ fn into_graph(robot_map: &Option<Vec<Vec<Option<Tile>>>>) -> PathFinder {
     }
 
     for (index,current_teleport) in teleports.iter().enumerate(){
-        for i in index+1..teleports.len()-1{
-            let c1=pathfinder.graph.node_weight(*current_teleport).unwrap();
-            let c2=pathfinder.graph.node_weight(teleports[i+1]).unwrap();
-            pathfinder.graph.add_edge(*current_teleport,teleports[i+1], eval_weight(*c1,*c2));
+        for i in index..teleports.len()-1{
+            let next_teleport = teleports[i+1];
+            pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
+                                      pathfinder.indexes[next_teleport.0][next_teleport.1].unwrap(),
+                                      eval_weight(*current_teleport, next_teleport));
         }
     }
 
