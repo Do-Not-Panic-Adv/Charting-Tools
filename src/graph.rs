@@ -57,7 +57,6 @@ struct PathFinder{
 #[allow(unused)]
 fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{1}
 
-<<<<<<< HEAD
 fn distance_to(who:(usize,usize), to:(usize,usize))->(usize,usize){
     ((who.0-to.0), (who.1-to.1))
 }
@@ -69,9 +68,9 @@ fn is_close_to(who:(usize,usize), to:(usize,usize))->bool{
 }
 
 fn weight(from:(usize, usize), to:(usize,usize), map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
-=======
+
 fn weight(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
->>>>>>> 8cf68b0d61dce83b1210b453ab525dbdea9a6184
+
     match map[from.0][from.1] {
         Some(X) => {if is_close_to(from,to) {
                     let base_cost = map[from.0][from.1].unwrap().properties().cost();
