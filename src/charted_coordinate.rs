@@ -64,6 +64,15 @@ impl ChartedCoordinate {
     pub fn get_col(&self) -> usize {
         self.1
     }
+
+    pub fn get_distance(&self, other:&Self)->(usize,usize){
+        (other.0-self.0, other.1-self.1)
+    }
+
+    pub fn is_close_to(&self, other: &self)->bool{
+        if ((self.get_distance(other).0).pow(2) + (self.get_distance(other).1).pow(2))<2 { true }
+        false
+    }
 }
 
 impl Add for ChartedCoordinate {
