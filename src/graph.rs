@@ -2,7 +2,8 @@ use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use robotics_lib::world::tile::{Content, Tile, TileType};
-use crate::charted_coordinate::ChartedCoordinates;
+use robotics_lib::world::World;
+use crate::charted_coordinate::ChartedCoordinate;
 
 
 /// -----Welcome to the Pathfinder!-----
@@ -54,10 +55,9 @@ struct PathFinder{
 }
 
 #[allow(unused)]
-fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
-    return 1;
-}
+fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{1}
 
+<<<<<<< HEAD
 fn distance_to(who:(usize,usize), to:(usize,usize))->(usize,usize){
     ((who.0-to.0), (who.1-to.1))
 }
@@ -69,6 +69,9 @@ fn is_close_to(who:(usize,usize), to:(usize,usize))->bool{
 }
 
 fn weight(from:(usize, usize), to:(usize,usize), map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
+=======
+fn weight(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
+>>>>>>> 8cf68b0d61dce83b1210b453ab525dbdea9a6184
     match map[from.0][from.1] {
         Some(X) => {if is_close_to(from,to) {
                     let base_cost = map[from.0][from.1].unwrap().properties().cost();
@@ -85,7 +88,7 @@ fn weight(from:(usize, usize), to:(usize,usize), map:&Vec<Vec<Option<Tile>>>)->O
     }
 }
 
-fn weight2(from:&ChartedCoordinates, to:&ChartedCoordinates, map:&Vec<Vec<Option<Tile>>>)->u32{
+fn weight2(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->u32{
     let base_cost = map[from.0][from.1].unwrap().properties().cost();
     if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
         let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
@@ -161,7 +164,7 @@ impl PathFinder{
                 let next_teleport = teleports[i+1];
                 pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
                                           pathfinder.indexes[next_teleport.0][next_teleport.1].unwrap(),
-                                          eval_weight(*current_teleport, next_teleport));
+                                          30); // teleport always consumes 30 energy
             }
         }
 
