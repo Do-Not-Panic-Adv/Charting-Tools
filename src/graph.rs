@@ -67,12 +67,11 @@ fn is_close_to(who:(usize,usize), to:(usize,usize))->bool{
     false
 }
 
-fn weight(from:(usize, usize), to:(usize,usize), map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
-
 fn weight(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
 
     match map[from.0][from.1] {
         Some(X) => {if is_close_to(from,to) {
+                    let env_cond = look_at_sky(world);//dove
                     let base_cost = map[from.0][from.1].unwrap().properties().cost();
                     if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
                         let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
