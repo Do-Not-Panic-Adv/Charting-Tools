@@ -2,6 +2,7 @@ use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use robotics_lib::world::tile::{Content, Tile, TileType};
+use crate::charted_coordinate::ChartedCoordinates;
 
 
 /// -----Welcome to the Pathfinder!-----
@@ -57,6 +58,37 @@ fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
     return 1;
 }
 
+fn weight(from:&ChartedCoordinates, to:&ChartedCoordinates, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
+    match map[from.0][from.1] {
+        Some(X) => match X {
+            Teleport => {match map[to.0][to.1] {
+                Teleport => Some(30),
+                _ => None
+            }}
+            _ => {if from.is_close_to(to) {
+                    let base_cost = map[from.0][from.1].unwrap().properties().cost();
+                    if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
+                        let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
+                        Some(base_cost + elevation_cost)
+                    }
+                    Some(base_cost)}
+                else{
+                    None
+                }
+            }
+        }
+        None => panic!()
+    }
+}
+
+fn weight2(from:&ChartedCoordinates, to:&ChartedCoordinates, map:&Vec<Vec<Option<Tile>>>)->u32{
+    let base_cost = map[from.0][from.1].unwrap().properties().cost();
+    if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
+        let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
+        base_cost + elevation_cost
+    }
+    base_cost
+}
 
 
 
