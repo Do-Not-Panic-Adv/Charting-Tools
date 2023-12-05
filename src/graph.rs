@@ -58,14 +58,19 @@ fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
     return 1;
 }
 
-fn weight(from:&ChartedCoordinates, to:&ChartedCoordinates, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
+fn distance_to(who:(usize,usize), to:(usize,usize))->(usize,usize){
+    ((who.0-to.0), (who.1-to.1))
+}
+fn is_close_to(who:(usize,usize), to:(usize,usize))->bool{
+    if ((distance_to(who, to).0)as i32).pow(2)+(((distance_to(who, to).1)as i32).pow(2))<2{
+        true
+    }
+    false
+}
+
+fn weight(from:(usize, usize), to:(usize,usize), map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
     match map[from.0][from.1] {
-        Some(X) => match X {
-            Teleport => {match map[to.0][to.1] {
-                Teleport => Some(30),
-                _ => None
-            }}
-            _ => {if from.is_close_to(to) {
+        Some(X) => {if is_close_to(from,to) {
                     let base_cost = map[from.0][from.1].unwrap().properties().cost();
                     if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
                         let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
@@ -76,7 +81,6 @@ fn weight(from:&ChartedCoordinates, to:&ChartedCoordinates, map:&Vec<Vec<Option<
                     None
                 }
             }
-        }
         None => panic!()
     }
 }
