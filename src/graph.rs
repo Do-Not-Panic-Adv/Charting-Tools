@@ -2,6 +2,7 @@ use petgraph::graph::{NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::World;
 
 
 /// -----Welcome to the Pathfinder!-----
@@ -53,9 +54,7 @@ struct PathFinder{
 }
 
 #[allow(unused)]
-fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{
-    return 1;
-}
+fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{1}
 
 
 
@@ -125,7 +124,7 @@ impl PathFinder{
                 let next_teleport = teleports[i+1];
                 pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
                                           pathfinder.indexes[next_teleport.0][next_teleport.1].unwrap(),
-                                          eval_weight(*current_teleport, next_teleport));
+                                          30); // teleport always consumes 30 energy
             }
         }
 
