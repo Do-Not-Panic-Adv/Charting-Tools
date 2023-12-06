@@ -4,7 +4,6 @@ pub mod charted_coordinate;
 pub mod charted_map;
 pub mod charted_paths;
 pub mod charted_world;
-mod energy;
 //mod graph;
 
 /// # Tool: Charting tools
