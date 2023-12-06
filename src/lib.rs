@@ -4,6 +4,7 @@ mod charted_map;
 mod charted_coordinate;
 mod graph;
 mod charted_world;
+mod energy;
 
 /// # Tool: Charting tools
 /// contains a selection of utilities that are useful for navigation around the world

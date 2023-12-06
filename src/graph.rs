@@ -1,10 +1,12 @@
-use petgraph::graph::{NodeIndex, UnGraph};
+use std::collections::HashMap;
+use petgraph::graph::{EdgeIndex, NodeIndex, UnGraph};
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
+use petgraph::csr::EdgeIndex;
+use robotics_lib::interface::look_at_sky;
+use robotics_lib::world::environmental_conditions::{EnvironmentalConditions, WeatherType};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
-use crate::charted_coordinate::ChartedCoordinate;
-
 
 /// -----Welcome to the Pathfinder!-----
 /// The idea behind the Pathfinder is to allow the user to better interact with the robot_map
@@ -49,59 +51,27 @@ use crate::charted_coordinate::ChartedCoordinate;
 ///    best possible energy consumption
 
 
-struct PathFinder{
+struct PathFinder<'a>{
     graph:Graph<(usize, usize), u32, Undirected>,
     indexes: Vec<Vec<Option<NodeIndex>>>,
+    world: &'a World,
+    current_condition: EnvironmentalConditions,
+    teleports_edges: HashMap<EdgeIndex, bool>,
+
 }
 
 #[allow(unused)]
 fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{1}
 
-fn distance_to(who:(usize,usize), to:(usize,usize))->(usize,usize){
-    ((who.0-to.0), (who.1-to.1))
-}
-fn is_close_to(who:(usize,usize), to:(usize,usize))->bool{
-    if ((distance_to(who, to).0)as i32).pow(2)+(((distance_to(who, to).1)as i32).pow(2))<2{
-        true
-    }
-    false
-}
-
-fn weight(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->Option<u32>{
-
-    match map[from.0][from.1] {
-        Some(X) => {if is_close_to(from,to) {
-                    let env_cond = look_at_sky(world);//dove
-                    let base_cost = map[from.0][from.1].unwrap().properties().cost();
-                    if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
-                        let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
-                        Some(base_cost + elevation_cost)
-                    }
-                    Some(base_cost)}
-                else{
-                    None
-                }
-            }
-        None => panic!()
-    }
-}
-
-fn weight2(from:&ChartedCoordinate, to:&ChartedCoordinate, map:&Vec<Vec<Option<Tile>>>)->u32{
-    let base_cost = map[from.0][from.1].unwrap().properties().cost();
-    if map[from.0][from.1].unwrap().elevation < map[to.0][to.1].unwrap().elevation{
-        let elevation_cost = ((map[to.0][to.1].unwrap().elevation - map[from.0][from.1].unwrap().elevation)as i32).pow(2);
-        base_cost + elevation_cost
-    }
-    base_cost
-}
-
-
 
 impl PathFinder{
-    pub fn from_map(robot_map: &Vec<Vec<Option<Tile>>>) -> PathFinder {
+    pub fn from_map(world:& World, robot_map: &Vec<Vec<Option<Tile>>>) -> PathFinder {
         let mut pathfinder = PathFinder{
             graph: UnGraph::<(usize,usize), u32>::new_undirected(),
             indexes: Vec::new(),
+            world,
+            current_condition: look_at_sky(world),
+            teleports_edges: HashMap::new(),
         };
 
         let mut teleports= Vec::new();
@@ -109,8 +79,6 @@ impl PathFinder{
         let dimension=robot_map.len(); //the world is a square
 
         PathFinder::adds_nodes(&robot_map, dimension, &mut pathfinder.indexes, &mut pathfinder.graph, &mut teleports);
-        //println!("INDEXES: {:?}", pathfinder.indexes);
-        //println!("ORIGINAL: {:?}", vec);
 
         // Add vertices
         for i in 0..dimension{
@@ -160,9 +128,10 @@ impl PathFinder{
         for (index,current_teleport) in teleports.iter().enumerate(){
             for i in index..teleports.len()-1{
                 let next_teleport = teleports[i+1];
-                pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
+                let teleports_edge=pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
                                           pathfinder.indexes[next_teleport.0][next_teleport.1].unwrap(),
                                           30); // teleport always consumes 30 energy
+                pathfinder.teleports_edges.insert(teleports_edge,true);
             }
         }
 
@@ -231,6 +200,30 @@ impl PathFinder{
                 }
                 Some((cost,path))
             }
+        }
+    }
+
+    pub fn update_graph(&mut self){
+        let new_condition=look_at_sky(self.world).get_weather_condition();
+        // self.current_condition=new_condition;
+        // for i in self.graph.edge_indices(){
+        //     if self.teleports_edges.contains_key(&i){
+        //         continue;
+        //     }
+        //     if let Some(wedge) = self.graph.edge_weight_mut(i){
+        //
+        //     }
+        //
+        // }
+    }
+    fn check_status(&mut self)->bool{
+        let new_condition=look_at_sky(self.world).get_weather_condition();
+        if new_condition == self.current_condition.get_weather_condition(){
+            return true;
+        }
+        else{
+            PathFinder::update_graph(&mut self);
+            return false;
         }
     }
 
@@ -312,6 +305,9 @@ macro_rules! set_tile_type {
     };
 }
 
+impl WorldGenerator{
+
+}
 #[test]
 fn test_correct_calls(){
 
@@ -352,7 +348,7 @@ fn test_correct_calls(){
     // ------------ End of "robot_map" initialization  ------------
 
 
-    let pathfinder=PathFinder::from_map(&robot_map);
+    let pathfinder=PathFinder::from_map(world, &robot_map);
     // Builds the PathFinder from the robot_map
 
     let cost_one = pathfinder.shortest_path_cost((0,0), (0,4));
