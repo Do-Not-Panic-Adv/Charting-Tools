@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use petgraph::graph::{EdgeIndex, NodeIndex, UnGraph};
+use robotics_lib::interface::look_at_sky;
+use robotics_lib::utils::calculate_cost_go_with_environment;
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
 
@@ -69,7 +71,26 @@ impl ChartingTool for ChartedPaths {
 }
 
 #[allow(unused)]
-fn eval_weight(c1: ChartedCoordinate, c2: ChartedCoordinate) -> u32 { 1 }
+fn eval_weight(from: &ChartedCoordinate, to: &ChartedCoordinate, map: &Vec<Vec<Option<Tile>>>, world: &World) -> u32 {
+    if ChartedCoordinate::is_close_to(from, to) {
+        let env_cond = look_at_sky(world);
+
+        match (map[from.0][from.1].as_ref(), map[to.0][to.1].as_ref()) {
+            (Some(tile_from), Some(tile_to)) => {
+                let base_cost = tile_from.tile_type.properties().cost();
+                let base_cost = calculate_cost_go_with_environment(base_cost, env_cond, tile_from.tile_type) as u32;
+                if tile_from.elevation < tile_to.elevation {
+                    let elevation_cost = ((tile_from.elevation - tile_to.elevation) as i32).pow(2) as u32;
+                    return (base_cost + elevation_cost);
+                }
+                return base_cost;
+            }
+            _ => { return u32::MAX; }
+        }
+    } else {
+        u32::MAX
+    }
+}
 
 
 impl ChartedPaths {
@@ -103,7 +124,7 @@ impl ChartedPaths {
                                     // seen it.
                                     self.graph.add_edge(*present_tile,
                                                         *next_tile,
-                                                        eval_weight(ChartedCoordinate(i, j), ChartedCoordinate(i, j + 1)));
+                                                        eval_weight(&ChartedCoordinate(i, j), &ChartedCoordinate(i, j + 1), &robot_map, &world));
                                 }
                             }
                         }
@@ -118,7 +139,7 @@ impl ChartedPaths {
 
                                     self.graph.add_edge(*present_tile,
                                                         *next_tile,
-                                                        eval_weight(ChartedCoordinate(i, j), ChartedCoordinate(i + 1, j)));
+                                                        eval_weight(&ChartedCoordinate(i, j), &ChartedCoordinate(i + 1, j), &robot_map, &world));
                                 }
                             }
                         }

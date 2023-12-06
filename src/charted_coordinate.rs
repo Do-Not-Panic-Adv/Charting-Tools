@@ -73,6 +73,14 @@ impl ChartedCoordinate {
     //     if ((self.get_distance(other).0).pow(2) + (self.get_distance(other).1).pow(2))<2 { true }
     //     false
     // }
+    pub fn distance_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> (usize, usize) {
+        ((who.0 - to.0), (who.1 - to.1))
+    }
+    pub fn is_close_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> bool {
+        return if ((ChartedCoordinate::distance_to(who, to).0) as i32).pow(2) + (((ChartedCoordinate::distance_to(who, to).1) as i32).pow(2)) < 2 {
+            true
+        } else {false}
+    }
 }
 
 impl Add for ChartedCoordinate {
