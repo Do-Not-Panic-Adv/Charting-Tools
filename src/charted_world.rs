@@ -7,7 +7,7 @@ use robotics_lib::world::World;
 use crate::charted_coordinate::ChartedCoordinate;
 use crate::ChartingTool;
 
-pub(crate) struct ChartedWorld {
+pub struct ChartedWorld {
     map: Vec<Vec<Option<Tile>>>,
 }
 

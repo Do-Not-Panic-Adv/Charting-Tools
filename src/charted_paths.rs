@@ -52,7 +52,7 @@ use crate::ChartingTool;
 ///    best possible energy consumption
 
 
-struct ChartedPaths {
+pub struct ChartedPaths {
     pub graph: Graph<ChartedCoordinate, u32, Undirected>,
     pub indexes: Vec<Vec<Option<NodeIndex>>>,
     pub teleports_edges: HashMap<EdgeIndex, bool>,
