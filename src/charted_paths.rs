@@ -1,17 +1,13 @@
 use std::collections::HashMap;
-use petgraph::graph::{EdgeIndex, NodeIndex, UnGraph};
+
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
-use robotics_lib::energy::Energy;
-use robotics_lib::event::events::Event;
-use robotics_lib::interface::look_at_sky;
-use robotics_lib::runner::backpack::BackPack;
-use robotics_lib::world::coordinates::Coordinate;
-use robotics_lib::world::environmental_conditions::{EnvironmentalConditions, WeatherType};
+use petgraph::graph::{EdgeIndex, NodeIndex, UnGraph};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
-use robotics_lib::world::worldgenerator::Generator;
 
+use crate::charted_coordinate::ChartedCoordinate;
+use crate::ChartingTool;
 
 /// -----Welcome to the Pathfinder!-----
 /// The idea behind the Pathfinder is to allow the user to better interact with the robot_map
@@ -56,37 +52,42 @@ use robotics_lib::world::worldgenerator::Generator;
 ///    best possible energy consumption
 
 
-struct PathFinder{
-    pub graph:Graph<(usize, usize), u32, Undirected>,
+struct ChartedPaths {
+    pub graph: Graph<ChartedCoordinate, u32, Undirected>,
     pub indexes: Vec<Vec<Option<NodeIndex>>>,
     pub teleports_edges: HashMap<EdgeIndex, bool>,
 }
 
-#[allow(unused)]
-fn eval_weight(c1:(usize,usize), c2:(usize,usize))->u32{1}
-
-
-impl PathFinder{
-
-    pub fn from_map(robot_map: &Vec<Vec<Option<Tile>>>, world:&World) -> PathFinder {
-        let mut pathfinder = PathFinder{
-            graph: UnGraph::<(usize,usize), u32>::new_undirected(),
+impl ChartingTool for ChartedPaths {
+    fn new() -> Self {
+        ChartedPaths {
+            graph: Default::default(),
             indexes: Vec::new(),
             teleports_edges: HashMap::new(),
-        };
+        }
+    }
+}
 
-        let mut teleports= Vec::new();
+#[allow(unused)]
+fn eval_weight(c1: ChartedCoordinate, c2: ChartedCoordinate) -> u32 { 1 }
 
-        let dimension=robot_map.len(); //the world is a square
 
-        PathFinder::adds_nodes(&robot_map, dimension, &mut pathfinder.indexes, &mut pathfinder.graph, &mut teleports);
+impl ChartedPaths {
+    pub fn init(&mut self, robot_map: &Vec<Vec<Option<Tile>>>, world: &World) {
+        self.graph = UnGraph::<ChartedCoordinate, u32>::new_undirected();
+
+        let mut teleports = Vec::new();
+
+        let dimension = robot_map.len(); //the world is a square
+
+        ChartedPaths::adds_nodes(&robot_map, dimension, &mut self.indexes, &mut self.graph, &mut teleports);
 
         // Add vertices
-        for i in 0..dimension{
-            for j in 0..dimension{
+        for i in 0..dimension {
+            for j in 0..dimension {
 
                 // check if the robot discovered that Tile
-                match pathfinder.indexes[i][j].as_ref() {
+                match self.indexes[i][j].as_ref() {
                     None => {}
                     Some(present_tile) => {
                         // this checks if the robot walked over the tile or if he has
@@ -94,30 +95,30 @@ impl PathFinder{
                         // nodes have not been added
 
                         // CHECK RIGHT NODE
-                        if j!=dimension-1 { // border check
-                            match pathfinder.indexes[i][j+1].as_ref(){
+                        if j != dimension - 1 { // border check
+                            match self.indexes[i][j + 1].as_ref() {
                                 None => {}
                                 Some(next_tile) => {
                                     // this checks if the robot walked over the tile or if he has
                                     // seen it.
-                                    pathfinder.graph.add_edge(*present_tile,
-                                                              *next_tile,
-                                                              eval_weight((i,j),(i,j+1)));
+                                    self.graph.add_edge(*present_tile,
+                                                        *next_tile,
+                                                        eval_weight(ChartedCoordinate(i, j), ChartedCoordinate(i, j + 1)));
                                 }
                             }
                         }
                         // CHECK NODE BELOW
-                        if i!=dimension-1{ // border check
-                            match pathfinder.indexes[i+1][j].as_ref(){
+                        if i != dimension - 1 { // border check
+                            match self.indexes[i + 1][j].as_ref() {
                                 None => {}
                                 Some(next_tile) => {
                                     // this checks if the robot walked over the tile or if he has
                                     // seen it. but it also checks the walk-ability, since, not walkable
                                     // nodes have not been added
 
-                                    pathfinder.graph.add_edge(*present_tile,
-                                                              *next_tile,
-                                                              eval_weight((i,j),(i+1,j)));
+                                    self.graph.add_edge(*present_tile,
+                                                        *next_tile,
+                                                        eval_weight(ChartedCoordinate(i, j), ChartedCoordinate(i + 1, j)));
                                 }
                             }
                         }
@@ -126,41 +127,38 @@ impl PathFinder{
             }
         }
 
-        for (index,current_teleport) in teleports.iter().enumerate(){
-            for i in index..teleports.len()-1{
-                let next_teleport = teleports[i+1];
-                let teleports_edge=pathfinder.graph.add_edge(pathfinder.indexes[current_teleport.0][current_teleport.1].unwrap(),
-                                          pathfinder.indexes[next_teleport.0][next_teleport.1].unwrap(),
-                                          30); // teleport always consumes 30 energy
-                pathfinder.teleports_edges.insert(teleports_edge,true);
+        for (index, current_teleport) in teleports.iter().enumerate() {
+            for i in index..teleports.len() - 1 {
+                let next_teleport = teleports[i + 1];
+                let teleports_edge = self.graph.add_edge(self.indexes[current_teleport.0][current_teleport.1].unwrap(),
+                                                         self.indexes[next_teleport.0][next_teleport.1].unwrap(),
+                                                         30); // teleport always consumes 30 energy
+                self.teleports_edges.insert(teleports_edge, true);
             }
         }
-
-        pathfinder
-
     }
 
-    pub fn shortest_path_cost(& self,  from:(usize, usize), to:(usize, usize))->Option<u32>{
-        if PathFinder::check_boundaries(self, from, to) == false{
-            return None
+    pub fn shortest_path_cost(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> Option<u32> {
+        if ChartedPaths::check_boundaries(self, from, to) == false {
+            return None;
         }
         let result = dijkstra(&self.graph,
                               self.indexes[from.0][from.1].unwrap(),
                               self.indexes[to.0][to.1], |e| *e.weight());
-        let cost=result.get(&self.indexes[0][4].unwrap());
-        return match cost{
-            None => {None}
-            Some(x) => {Some(*x)}
-        }
+        let cost = result.get(&self.indexes[0][4].unwrap());
+        return match cost {
+            None => { None }
+            Some(x) => { Some(*x) }
+        };
     }
-    pub fn shortest_path_cost_a_star(&self, from:(usize, usize), to:(usize, usize))->Option<u32>{
-        if PathFinder::check_boundaries(self, from, to) == false{
-            return None
+    pub fn shortest_path_cost_a_star(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> Option<u32> {
+        if ChartedPaths::check_boundaries(self, from, to) == false {
+            return None;
         }
-        let path_info= astar(&self.graph, self.indexes[from.0][from.1].unwrap(),
-                             |finish| finish == self.indexes[to.0][to.1].unwrap(),
-                             |e| *e.weight(),
-                             |_| 0
+        let path_info = astar(&self.graph, self.indexes[from.0][from.1].unwrap(),
+                              |finish| finish == self.indexes[to.0][to.1].unwrap(),
+                              |e| *e.weight(),
+                              |_| 0,
         );
         return match path_info {
             None => {
@@ -169,29 +167,29 @@ impl PathFinder{
             Some(info) => {
                 Some(info.0)
             }
-        }
+        };
     }
-    pub fn shortest_path(& self,from: (usize,usize), to: (usize,usize))->Option<(usize,Vec<(usize,usize)>)>{
-        if PathFinder::check_boundaries(self, from, to) == false{
-            return None
+    pub fn shortest_path(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> Option<(usize, Vec<ChartedCoordinate>)> {
+        if ChartedPaths::check_boundaries(self, from, to) == false {
+            return None;
         }
 
-        let path_info= astar(&self.graph, self.indexes[from.0][from.1].unwrap(),
-                        |finish| finish == self.indexes[to.0][to.1].unwrap(),
-                        |e| *e.weight(),
-            |_| 0
+        let path_info = astar(&self.graph, self.indexes[from.0][from.1].unwrap(),
+                              |finish| finish == self.indexes[to.0][to.1].unwrap(),
+                              |e| *e.weight(),
+                              |_| 0,
         );
 
         return match path_info {
-            None => {None}
+            None => { None }
             Some(a_star_result) => {
-                let cost= a_star_result.0 as usize;
+                let cost = a_star_result.0 as usize;
                 let nodes = a_star_result.1;
 
-                let mut path =Vec::new();
+                let mut path = Vec::new();
 
                 for i in nodes.iter() {
-                    let converted=PathFinder::index_to_coordinate(self,i);
+                    let converted = ChartedPaths::index_to_coordinate(self, i);
                     match converted {
                         None => {}
                         Some(x) => {
@@ -199,86 +197,43 @@ impl PathFinder{
                         }
                     }
                 }
-                Some((cost,path))
+                Some((cost, path))
             }
-        }
+        };
     }
 
-    // pub fn update_graph_edges(&mut self,  world:&World){
-    //     let new_condition=look_at_sky(world);
-    //     self.current_condition=new_condition;
-    //     // update Pathfinder condition
-    //
-    //     for i in self.graph.edge_indices(){
-    //         // i don't need to update the teleports
-    //         if self.teleports_edges.contains_key(&i){
-    //             continue;
-    //         }
-    //
-    //         if let Some(weight) = self.graph.edge_weight_mut(i){
-    //             // retrieve each edge val
-    //             if let Some((node_from,node_to))= self.graph.edge_endpoints(i){
-    //                 // retrieve nodes that are connected to this edge (because i need to re-evaluate
-    //                 // the cost using the coordinates).
-    //
-    //                 if let Some(from)= self.graph.node_weight(node_from){
-    //                     if let Some(to)=self.graph.node_weight(node_to){
-    //                         let cost=eval_weight(*from,*to); // re-evaluate energy cost
-    //                         //from scratch
-    //                         *weight=cost;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-    // pub fn update(&mut self , world:&World)->bool{
-    //     let new_condition_wheather=look_at_sky(world).get_weather_condition();
-    //     let new_condition_time=look_at_sky(world).get_time_of_day();
-    //     if (new_condition_wheather == self.current_condition.get_weather_condition())&&
-    //         ( new_condition_time == self.current_condition.get_time_of_day()){
-    //         return true;
-    //     }
-    //     else{
-    //         PathFinder::update_graph_edges(&mut self,  world);
-    //         return false;
-    //     }
-    // }
-
-    fn check_boundaries(&self, from:(usize, usize), to:(usize, usize))->bool{
+    fn check_boundaries(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> bool {
         if (from.0 >= self.indexes.len()) || (from.1 >= self.indexes.len()) ||
-            (to.0 >= self.indexes.len()) || (to.1 >= self.indexes.len()){
+            (to.0 >= self.indexes.len()) || (to.1 >= self.indexes.len()) {
             return false;
         }
         return true;
     }
 
-    fn index_to_coordinate(&self, node_index: &NodeIndex)-> Option<(usize, usize)> {
-        let mut result = None;
-        let dim=self.indexes.len();
-        for i in 0..dim{
-            for (index,current_node) in self.indexes[i].iter().enumerate(){
-                match current_node{
+    fn index_to_coordinate(&self, node_index: &NodeIndex) -> Option<ChartedCoordinate> {
+        let dim = self.indexes.len();
+        for i in 0..dim {
+            for (index, current_node) in self.indexes[i].iter().enumerate() {
+                match current_node {
                     None => {}
                     Some(node) => {
-                        if node==node_index{
-                            return Some((i,index));
-
+                        if node == node_index {
+                            return Some(ChartedCoordinate(i, index));
                         }
                     }
                 }
             }
         }
-        result
+        None
     }
-    fn adds_nodes(matrix:&Vec<Vec<Option<Tile>>>, dim:usize, indexes:&mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph<(usize, usize), u32>, teleports:&mut Vec<(usize, usize)>){
+    fn adds_nodes(matrix: &Vec<Vec<Option<Tile>>>, dim: usize, indexes: &mut Vec<Vec<Option<NodeIndex>>>, graph: &mut UnGraph<ChartedCoordinate, u32>, teleports: &mut Vec<ChartedCoordinate>) {
         // takes matrix as a reference of the robot map and the dimension of the map.
         // creates a graph with the walkable seen nodes,
         // changes the matrix of Node-indexes of the pathfinder that will be used to retrieve graph Indexes
         // add the teleports NodeIndexes
-        for i in  0..dim{
+        for i in 0..dim {
             let mut row: Vec<Option<NodeIndex>> = Vec::with_capacity(dim);
-            for j in 0..dim{
+            for j in 0..dim {
                 match matrix[i][j].as_ref() {
                     // check if the robot discovered that Tile
                     None => {
@@ -287,7 +242,7 @@ impl PathFinder{
                     Some(present_tile) => {
                         // this checks if the robot walked over the tile or if he has
                         // seen it.
-                        if !present_tile.tile_type.properties().walk(){
+                        if !present_tile.tile_type.properties().walk() {
                             // Since the vector contains also Tiles that the robot has seen
                             // we have to check if the tile we are looking at is walkable or not
                             // if not i don't need it in the graph but i still need in indexes
@@ -296,9 +251,9 @@ impl PathFinder{
                             continue;
                         }
 
-                        let current_node=graph.add_node((i, j));
-                        if present_tile.tile_type == TileType::Teleport(true){
-                            teleports.push((i,j));
+                        let current_node = graph.add_node(ChartedCoordinate(i, j));
+                        if present_tile.tile_type == TileType::Teleport(true) {
+                            teleports.push(ChartedCoordinate(i, j));
                         }
                         row.push(Some(current_node));
                     }
@@ -307,7 +262,6 @@ impl PathFinder{
             indexes.push(row);
         }
     }
-
 }
 
 // ----------------Test usage only------------------------
@@ -325,40 +279,43 @@ macro_rules! set_tile_type {
 
 
 #[test]
-fn test_correct_calls(){
+fn test_correct_calls() {
 
     // ------------ Creating the map example at: ./../docfiles/world_example.png ------------
-    let walkable=Tile{
+    let walkable = Tile {
         tile_type: TileType::Sand,
         content: Content::Rock(1),
         elevation: 0,
     };
 
-    let not_walkable=Tile{
+    let not_walkable = Tile {
         tile_type: TileType::DeepWater,
         content: Content::Coin(1),
         elevation: 10,
     };
 
-    let mut robot_map= Vec::new();
+    let mut robot_map = Vec::new();
 
-    for i in 0..5{
-        let mut row_vector= Vec::new();
-        for _ in 0..5{
-            if i==2 || i==4{
+    for i in 0..5 {
+        let mut row_vector = Vec::new();
+        for _ in 0..5 {
+            if i == 2 || i == 4 {
                 row_vector.push(Some(not_walkable.clone())); //t10 -->t14 && t20 -->t24
-            }
-            else{
+            } else {
                 row_vector.push(Some(walkable.clone()));
             }
         }
         robot_map.push(row_vector);
     }
 
-    set_tile_type!(robot_map, 0, 3, TileType::DeepWater); //t3
-    set_tile_type!(robot_map, 0, 4, TileType::Teleport(true)); // t4
-    set_tile_type!(robot_map, 1, 1, TileType::DeepWater); //t6
-    set_tile_type!(robot_map, 1, 2, TileType::Teleport(true)); //t7
+    set_tile_type!(robot_map, 0, 3, TileType::DeepWater);
+    //t3
+    set_tile_type!(robot_map, 0, 4, TileType::Teleport(true));
+    // t4
+    set_tile_type!(robot_map, 1, 1, TileType::DeepWater);
+    //t6
+    set_tile_type!(robot_map, 1, 2, TileType::Teleport(true));
+    //t7
     set_tile_type!(robot_map, 3, 4, TileType::Teleport(true)); //t18
 
     // ------------ End of "robot_map" initialization  ------------

@@ -3,7 +3,7 @@ use std::ops::{Add, Sub};
 
 use robotics_lib::world::coordinates::Coordinate;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 /// struct: ChartedCoordinate
 ///
 /// it is simply a custom type compatible with robotics_lib::world::coordinates::Coordinate,
@@ -20,7 +20,7 @@ use robotics_lib::world::coordinates::Coordinate;
 ///     let tuple = (0usize, 0usize);
 ///     let c = ChartedCoordinate::from(tuple);
 ///
-pub struct ChartedCoordinate(usize, usize);
+pub struct ChartedCoordinate(pub usize, pub usize);
 
 impl Default for ChartedCoordinate {
     fn default() -> Self {

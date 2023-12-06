@@ -1,9 +1,7 @@
-use std::collections::HashMap;
 
-use robotics_lib::interface::{discover_tiles, robot_map, robot_view};
+use robotics_lib::interface::{robot_map, robot_view};
 use robotics_lib::runner::Runnable;
-use robotics_lib::utils::LibError;
-use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
 use crate::charted_coordinate::ChartedCoordinate;

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 
-use robotics_lib::runner::Robot;
 use robotics_lib::world::tile::{Content, Tile, TileType};
+
 use crate::charted_coordinate::ChartedCoordinate;
 use crate::ChartingTool;
 
@@ -135,7 +135,7 @@ impl<K: MapKey> From<Vec<Vec<Option<Tile>>>> for ChartedMap<K> {
 
 impl<K: MapKey> ChartedMap<K> {
     pub fn save(&mut self, poi: &K, coordinate: &ChartedCoordinate) {
-        let num= poi.get_quantity();
+        let num = poi.get_quantity();
         let poi = poi.to_default();
         match self.get_mut(&poi) {
             None => { self.map.insert(poi, vec![(coordinate.clone(), num)]); }
@@ -151,18 +151,6 @@ impl<K: MapKey> ChartedMap<K> {
         self.map.get_mut(poi)
     }
 
-    pub fn get_closest(&self, robot: &Robot, poi: &K) -> Option<ChartedCoordinate> {
-        match self.get(poi) {
-            None => { None }
-            Some(pois) => {
-                let mut closest = ChartedCoordinate::default();
-                for (_, _) in pois.iter(){
-                    todo!()
-                }
-                Some(closest)
-            }
-        }
-    }
     pub fn get_most(&self, poi: &K) -> Option<(ChartedCoordinate, usize)> {
         match self.get(poi) {
             None => { None }
@@ -205,9 +193,9 @@ fn charted_map_test() {
     let content2 = Content::Coin(11);
     let content3 = Content::Coin(10);
 
-    let tile_type1=TileType::Grass;
-    let tile_type2=TileType::Street;
-    let tile_type3=TileType::ShallowWater;
+    let tile_type1 = TileType::Grass;
+    let tile_type2 = TileType::Street;
+    let tile_type3 = TileType::ShallowWater;
 
     let c1 = ChartedCoordinate::new(12, 21);
     let c2 = ChartedCoordinate::new(1, 2);
@@ -222,7 +210,7 @@ fn charted_map_test() {
     map_tile_type.save(&tile_type3, &c3);
 
     println!("{}", map_content);
-    println!("{}",map_tile_type);
+    println!("{}", map_tile_type);
     let c = map_content.get(&Content::Coin(0));
     println!("{c:?}");
 }

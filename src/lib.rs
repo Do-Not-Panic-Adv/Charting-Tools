@@ -2,7 +2,7 @@ use robotics_lib::interface::Tools;
 
 mod charted_map;
 mod charted_coordinate;
-mod graph;
+mod charted_paths;
 mod charted_world;
 mod energy;
 
