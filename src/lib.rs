@@ -1,10 +1,10 @@
 use robotics_lib::interface::Tools;
 
-mod charted_map;
 mod charted_coordinate;
 mod charted_paths;
 mod charted_world;
 mod energy;
+mod graph;
 
 /// # Tool: Charting tools
 /// contains a selection of utilities that are useful for navigation around the world
@@ -36,10 +36,12 @@ pub struct ChartingTools;
 impl Tools for ChartingTools {}
 
 impl ChartingTools {
-    pub fn tool<T>() -> T where T: ChartingTool {
+    pub fn tool<T>() -> T
+    where
+        T: ChartingTool,
+    {
         T::new()
     }
-
 }
 
 /// # Trait: ChartingTool
