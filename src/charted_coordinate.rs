@@ -3,7 +3,7 @@ use std::ops::{Add, Sub};
 
 use robotics_lib::world::coordinates::Coordinate;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 /// struct: ChartedCoordinate
 ///
 /// it is simply a custom type compatible with robotics_lib::world::coordinates::Coordinate,
@@ -20,7 +20,7 @@ use robotics_lib::world::coordinates::Coordinate;
 ///     let tuple = (0usize, 0usize);
 ///     let c = ChartedCoordinate::from(tuple);
 ///
-pub struct ChartedCoordinate(usize, usize);
+pub struct ChartedCoordinate(pub usize, pub usize);
 
 impl Default for ChartedCoordinate {
     fn default() -> Self {
@@ -63,6 +63,23 @@ impl ChartedCoordinate {
 
     pub fn get_col(&self) -> usize {
         self.1
+    }
+
+    // pub fn get_distance(&self, other:&Self)->(usize,usize){
+    //     (other.0-self.0, other.1-self.1)
+    // }
+    //
+    // pub fn is_close_to(&self, other: &Self)->bool{
+    //     if ((self.get_distance(other).0).pow(2) + (self.get_distance(other).1).pow(2))<2 { true }
+    //     false
+    // }
+    pub fn distance_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> (usize, usize) {
+        ((who.0 - to.0), (who.1 - to.1))
+    }
+    pub fn is_close_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> bool {
+        return if ((ChartedCoordinate::distance_to(who, to).0) as i32).pow(2) + (((ChartedCoordinate::distance_to(who, to).1) as i32).pow(2)) < 2 {
+            true
+        } else {false}
     }
 }
 

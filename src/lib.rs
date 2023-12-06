@@ -1,10 +1,11 @@
 use robotics_lib::interface::Tools;
 
-mod charted_bot;
-mod charted_coordinate;
-mod charted_map;
-mod charted_world;
-mod graph;
+
+pub mod charted_coordinate;
+pub mod charted_map;
+pub mod charted_paths;
+pub mod charted_world;
+//mod graph;
 
 /// # Tool: Charting tools
 /// contains a selection of utilities that are useful for navigation around the world
