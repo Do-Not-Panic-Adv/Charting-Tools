@@ -44,8 +44,10 @@ impl MapKey for Content {
             | Content::Coin(x)
             | Content::Water(x)
             | Content::Market(x)
+            | Content::JollyBlock(x)
+            | Content::Bush(x)
             | Content::Fish(x) => x.to_owned(),
-            Content::Fire | Content::Bin(_) | Content::Crate(_) | Content::Bank(_) => 1,
+            Content::Fire | Content::Building | Content::Scarecrow | Content::Bin(_) | Content::Crate(_) | Content::Bank(_) => 1,
             Content::None => 0,
         }
     }

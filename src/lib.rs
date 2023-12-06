@@ -39,6 +39,7 @@ impl ChartingTools {
     pub fn tool<T>() -> T where T: ChartingTool {
         T::new()
     }
+
 }
 
 /// # Trait: ChartingTool
