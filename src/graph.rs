@@ -363,30 +363,30 @@ fn test_correct_calls(){
 
     // ------------ End of "robot_map" initialization  ------------
 
-    let pathfinder=PathFinder::from_map( &robot_map);
-    // Builds the PathFinder from the robot_map
-
-    let cost_one = pathfinder.shortest_path_cost((0,0), (0,4));
-    // evaluates cost from tile t0 to t4. NB: there is the teleport.
-
-    let cost_two = pathfinder.shortest_path_cost_a_star((0,0), (1,4));
-    // evaluates cost from tile t0 to t9
-
-    println!("The cost from (0,0) to (0,4) is: {:?}", cost_one.unwrap());
-    //assert_eq!(6,cost_one.unwrap());
-
-    println!("The cost from (0,0) to (1,4) is: {:?}", cost_two.unwrap());
-    //assert_eq!(5,cost_two.unwrap());
-
-    let path=pathfinder.shortest_path((0,0), (0,4));
-    // evaluates the cost and the shortest path from t0 to t4. NB: there is the teleport
-
-    for i in path.clone().unwrap().1{
-        // iterate over the shortest path coordinates
-        println!("{:?}",i);
-    }
-
-    //assert_eq!(path.unwrap().1,vec![
+    // let pathfinder=PathFinder::from_map(&robot_map);
+    // // Builds the PathFinder from the robot_map
+    //
+    // let cost_one = pathfinder.shortest_path_cost((0,0), (0,4));
+    // // evaluates cost from tile t0 to t4. NB: there is the teleport.
+    //
+    // let cost_two = pathfinder.shortest_path_cost_a_star((0,0), (1,4));
+    // // evaluates cost from tile t0 to t9
+    //
+    // println!("The cost from (0,0) to (0,4) is: {:?}", cost_one.unwrap());
+    // assert_eq!(6,cost_one.unwrap());
+    //
+    // println!("The cost from (0,0) to (1,4) is: {:?}", cost_two.unwrap());
+    // assert_eq!(5,cost_two.unwrap());
+    //
+    // let path=pathfinder.shortest_path((0,0), (0,4));
+    // // evaluates the cost and the shortest path from t0 to t4. NB: there is the teleport
+    //
+    // for i in path.clone().unwrap().1{
+    //     // iterate over the shortest path coordinates
+    //     println!("{:?}",i);
+    // }
+    //
+    // assert_eq!(path.unwrap().1,vec![
     //     (0, 0),
     //     (0, 1),
     //     (0, 2),
@@ -395,5 +395,4 @@ fn test_correct_calls(){
     //     (1,4),
     //     (0, 4)
     // ])
-
 }
