@@ -1,6 +1,6 @@
 use robotics_lib::interface::Tools;
 
-
+pub mod charted_bot;
 pub mod charted_coordinate;
 pub mod charted_map;
 pub mod charted_paths;
