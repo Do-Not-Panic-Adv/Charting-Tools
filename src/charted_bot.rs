@@ -31,21 +31,23 @@ impl ChartedBot {
         //Calculates cost for the discovery
 
         let to_visit = match dir {
-            Direction::Up => {}
+            Direction::Up => {
+                let mut tiles: Vec<(usize, usize)> = vec![];
+                tiles
+            }
             Direction::Down => {
-                let x: usize;
-                let y: usize;
-                println!("col: {}", self.coordinates.get_col());
                 if self.coordinates.get_col() < 1 {
                     return Err(LibError::OutOfBounds);
                 }
-                for x in self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1 {
-                    for y in self.coordinates.get_row()
-                        ..self.coordinates.get_row() + self.length as usize
-                    {
-                        println!("Tile to discover: ({x},{y})");
+                let mut tiles: Vec<(usize, usize)> = vec![];
+                for y in
+                    self.coordinates.get_row()..self.coordinates.get_row() + self.length as usize
+                {
+                    for x in self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1 {
+                        tiles.push((y, x))
                     }
                 }
+                tiles
             }
             Direction::Left => todo!(),
             Direction::Right => todo!(),
@@ -55,7 +57,14 @@ impl ChartedBot {
             .get_energy()
             .has_enough_energy((self.length * self.width * 3) as usize)
         {
-            let res = discover_tiles(robot, world, &vec![(5, 5)]);
+            //let res = discover_tiles(robot, world, &vec![(4, 5)]);
+
+            for t in to_visit {
+                print!("discovering: {:?}", t);
+                println!(" discoveries left: {}", world.get_discoverable());
+                let _ = discover_tiles(robot, world, &[t]);
+            }
+
             Ok(())
         } else {
             Err(LibError::NotEnoughEnergy)
