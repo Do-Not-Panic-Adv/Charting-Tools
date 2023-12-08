@@ -74,12 +74,17 @@ impl ChartedCoordinate {
     //     false
     // }
     pub fn distance_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> (i32, i32) {
-        ((who.0 as i32 - to.0 as i32) , (who.1 as i32 - to.1 as i32))
+        ((who.0 as i32 - to.0 as i32), (who.1 as i32 - to.1 as i32))
     }
     pub fn is_close_to(who: &ChartedCoordinate, to: &ChartedCoordinate) -> bool {
-        return if (ChartedCoordinate::distance_to(who, to).0).pow(2) + ((ChartedCoordinate::distance_to(who, to).1).pow(2)) < 2 {
+        return if (ChartedCoordinate::distance_to(who, to).0).pow(2)
+            + ((ChartedCoordinate::distance_to(who, to).1).pow(2))
+            < 2
+        {
             true
-        } else {false}
+        } else {
+            false
+        };
     }
 }
 
