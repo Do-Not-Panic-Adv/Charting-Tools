@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-robotics_lib = {registry = "kellnr"}
-#robotics_lib = {git= "https://github.com/Do-Not-Panic-Adv/Robotic-Lib.git", branch="latest"}
+#robotics_lib = {registry = "kellnr"}
+robotics_lib = {git= "https://github.com/Do-Not-Panic-Adv/Robotic-Lib.git", branch="latest"}
 petgraph = "0.6.4"
