@@ -4,36 +4,32 @@ use robotics_lib::{
     interface::{discover_tiles, robot_map, Direction},
     runner::Runnable,
     utils::LibError,
-    world::{coordinates::Coordinate, tile::Tile, World},
+    world::World,
 };
 
 use crate::charted_coordinate::ChartedCoordinate;
 
 pub struct ChartedBot {
-    width: u32,
-    length: u32,
     coordinates: ChartedCoordinate,
-    direction: Direction,
 }
 
 impl ChartedBot {
-    pub fn new(length: u32, coordinates: ChartedCoordinate, direction: Direction) -> Self {
-        ChartedBot {
-            width: 3,
-            length,
-            coordinates,
-            direction,
-        }
+    pub fn new(coordinates: ChartedCoordinate) -> Self {
+        ChartedBot { coordinates }
     }
 
     pub fn discover_line(
         &mut self,
         robot: &mut impl Runnable,
         world: &mut World,
+
+        length: usize,
+        width: usize,
+        direction: Direction,
     ) -> Result<i32, LibError> {
         //Calculates cost for the discovery
 
-        let to_visit = match self.direction {
+        let to_visit = match direction {
             Direction::Up => {
                 let iter_x;
                 if self.coordinates.get_col() < 1 {
@@ -45,10 +41,10 @@ impl ChartedBot {
                 let iter_y;
                 let mut tiles: Vec<(usize, usize)> = vec![];
 
-                if (self.coordinates.get_row() as i32 - self.length as i32) < 0 {
+                if (self.coordinates.get_row() as i32 - length as i32) < 0 {
                     iter_y = (0..=self.coordinates.get_row()).rev();
                 } else {
-                    iter_y = ((self.coordinates.get_row() - self.length as usize + 1)
+                    iter_y = ((self.coordinates.get_row() - length as usize + 1)
                         ..=self.coordinates.get_row())
                         .rev();
                 }
@@ -68,13 +64,13 @@ impl ChartedBot {
                 } else {
                     inter_x = self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1;
                 }
-                if (self.coordinates.get_row() + self.length as usize - 1usize)
+                if (self.coordinates.get_row() + length as usize - 1usize)
                     >= robot_map(world).unwrap()[0].len()
                 {
                     inter_y = self.coordinates.get_row()..=robot_map(world).unwrap()[0].len() - 1
                 } else {
                     inter_y = self.coordinates.get_row()
-                        ..=self.coordinates.get_row() + self.length as usize - 1usize
+                        ..=self.coordinates.get_row() + length as usize - 1usize
                 }
 
                 let mut tiles: Vec<(usize, usize)> = vec![];
@@ -96,13 +92,13 @@ impl ChartedBot {
                         (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
                 }
 
-                if (self.coordinates.get_col() + self.length as usize - 1usize)
+                if (self.coordinates.get_col() + length as usize - 1usize)
                     >= robot_map(world).unwrap().len()
                 {
                     inter_x = self.coordinates.get_col()..=robot_map(world).unwrap().len() - 1
                 } else {
                     inter_x = self.coordinates.get_col()
-                        ..=self.coordinates.get_col() + self.length as usize - 1usize
+                        ..=self.coordinates.get_col() + length as usize - 1usize
                 }
 
                 let mut tiles: Vec<(usize, usize)> = vec![];
@@ -123,10 +119,10 @@ impl ChartedBot {
                     int_y = (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
                 }
 
-                if (self.coordinates.get_col() as i32 - self.length as i32) < 0 {
+                if (self.coordinates.get_col() as i32 - length as i32) < 0 {
                     int_x = (0..=self.coordinates.get_col()).rev();
                 } else {
-                    int_x = (self.coordinates.get_col() - self.length as usize + 1
+                    int_x = (self.coordinates.get_col() - length as usize + 1
                         ..=self.coordinates.get_col())
                         .rev();
                 }
@@ -144,7 +140,7 @@ impl ChartedBot {
         let mut discovered = 0;
         if robot
             .get_energy()
-            .has_enough_energy((self.length * self.width * 3) as usize)
+            .has_enough_energy((length * width * 3) as usize)
         {
             for t in to_visit {
                 if world.get_discoverable() <= 0 {
@@ -170,11 +166,30 @@ impl ChartedBot {
     /// Panics if .
     pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> bool {
         match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
-            Some(t) => {
-                println!("tile exists: {:?}", t);
-                true
-            }
+            Some(_) => true,
             None => false,
         }
+    }
+
+    pub fn discover_path(
+        &mut self,
+        robot: &mut impl Runnable,
+        world: &mut World,
+        width: usize,
+        path: Vec<Direction>,
+    ) {
+        for d in path {
+            Self::move_bot(self, &d);
+            let _ = Self::discover_line(self, robot, world, 1, width, d);
+        }
+    }
+    pub(crate) fn move_bot(&mut self, direction: &Direction) {
+        match direction {
+            Direction::Up => self.coordinates.0 -= 1,
+            Direction::Down => self.coordinates.0 += 1,
+            Direction::Left => self.coordinates.1 -= 1,
+            Direction::Right => self.coordinates.1 += 1,
+        }
+        println!("DiscoveryBot moved to: {:?}", self.coordinates)
     }
 }
