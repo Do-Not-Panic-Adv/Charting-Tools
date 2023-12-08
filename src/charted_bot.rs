@@ -35,55 +35,79 @@ impl ChartedBot {
 
         let to_visit = match self.direction {
             Direction::Up => {
+                let iter_x;
                 if self.coordinates.get_col() < 1 {
-                    return Err(LibError::OutOfBounds);
+                    iter_x = 0..=self.coordinates.get_col() + 1
+                } else {
+                    iter_x = self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1;
                 }
 
-                let int;
+                let iter_y;
                 let mut tiles: Vec<(usize, usize)> = vec![];
 
                 if (self.coordinates.get_row() as i32 - self.length as i32) < 0 {
-                    int = (0..=self.coordinates.get_row()).rev();
+                    iter_y = (0..=self.coordinates.get_row()).rev();
                 } else {
-                    int = ((self.coordinates.get_row() - self.length as usize + 1)
+                    iter_y = ((self.coordinates.get_row() - self.length as usize + 1)
                         ..=self.coordinates.get_row())
                         .rev();
                 }
 
-                for y in int {
-                    for x in self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1 {
-                        println!("pushing {:?}", (y, x));
+                for y in iter_y {
+                    for x in iter_x.clone() {
                         tiles.push((y, x))
                     }
                 }
                 tiles
             }
             Direction::Down => {
+                let inter_x;
+                let inter_y;
                 if self.coordinates.get_col() < 1 {
-                    return Err(LibError::OutOfBounds);
+                    inter_x = 0..=self.coordinates.get_col() + 1
+                } else {
+                    inter_x = self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1;
                 }
-                let mut tiles: Vec<(usize, usize)> = vec![];
-                for y in
-                    self.coordinates.get_row()..self.coordinates.get_row() + self.length as usize
+                if (self.coordinates.get_row() + self.length as usize - 1usize)
+                    >= robot_map(world).unwrap()[0].len()
                 {
-                    for x in self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1 {
+                    inter_y = self.coordinates.get_row()..=robot_map(world).unwrap()[0].len() - 1
+                } else {
+                    inter_y = self.coordinates.get_row()
+                        ..=self.coordinates.get_row() + self.length as usize - 1usize
+                }
+
+                let mut tiles: Vec<(usize, usize)> = vec![];
+                for y in inter_y {
+                    for x in inter_x.clone() {
                         tiles.push((y, x))
                     }
                 }
                 tiles
             }
             Direction::Right => {
-                let int;
+                let inter_y;
+                let inter_x;
+
                 if self.coordinates.get_row() < 1 {
-                    int = (0..=self.coordinates.get_row() + 1).rev();
+                    inter_y = (0..=self.coordinates.get_row() + 1).rev();
                 } else {
-                    int = (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
+                    inter_y =
+                        (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
                 }
-                let mut tiles: Vec<(usize, usize)> = vec![];
-                for x in self.coordinates.get_col()
-                    ..=self.coordinates.get_col() + self.length as usize - 1usize
+
+                if (self.coordinates.get_col() + self.length as usize - 1usize)
+                    >= robot_map(world).unwrap().len()
                 {
-                    for y in int.clone() {
+                    inter_x = self.coordinates.get_col()..=robot_map(world).unwrap().len() - 1
+                } else {
+                    inter_x = self.coordinates.get_col()
+                        ..=self.coordinates.get_col() + self.length as usize - 1usize
+                }
+
+                let mut tiles: Vec<(usize, usize)> = vec![];
+                for x in inter_x {
+                    for y in inter_y.clone() {
                         tiles.push((y, x))
                     }
                 }
