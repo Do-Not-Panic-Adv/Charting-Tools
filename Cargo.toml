@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 #robotics_lib = {registry = "kellnr"}
-robotics_lib = {git= "https://github.com/Do-Not-Panic-Adv/Robotic-Lib.git", branch="latest"}
+robotics_lib = {git= "https://github.com/Advanced-Programming-2023/Robotic-Lib/", branch="master"}
 petgraph = "0.6.4"
