@@ -8,6 +8,7 @@ use robotics_lib::utils::calculate_cost_go_with_environment;
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::World;
 use robotics_lib::interface::Direction;
+use robotics_lib::utils::LibError::ContentValueIsHigherThanMax;
 use crate::charted_coordinate::ChartedCoordinate;
 use crate::ChartingTool;
 
@@ -108,7 +109,9 @@ use crate::ChartingTool;
 ///                None => { //path not found}
 ///                 Some(path) => {//cost = path.0, coordinates=path.1
 ///                     for i in 1..path.1.len(){ //movin
-///                         let updated_view= match go(self, world, Direction::Up){
+///                         let updated_view= match go(self, world,
+///                                     ChartedPaths::coordinates_to_direction(
+///                                         my_coordinate,destination).unwrap())){
 ///                             Ok((view,_)) => {Some(view)}
 ///                             Err(_) => {None}
 ///                         };
@@ -122,7 +125,7 @@ use crate::ChartingTool;
 ///     This function converts what is the direction the robot need to move if he want to go from
 ///     a coordinate to another one. For example if the robot is in (0,0) and he wants to move to
 ///     (1,0) then he needs to pass Direction::Down to the go interface.
-///
+///     Example
 ///
 pub struct ChartedPaths {
     pub graph: Graph<ChartedCoordinate, u32, Undirected>,
@@ -279,7 +282,7 @@ impl ChartedPaths {
         if from.1 > to.1 {
             return Ok(Direction::Left);
         }
-        if from.1 <to.1{
+        if from.1 < to.1{
             return Ok(Direction::Right);
         }
         if from.0 > to.0 {
@@ -386,6 +389,21 @@ macro_rules! set_tile_type {
             }
         }
     };
+}
+
+#[test]
+fn directions(){
+    let center=ChartedCoordinate(1,1);
+    let c1=ChartedCoordinate(0,1);
+    let c2=ChartedCoordinate(1,0);
+    let c3=ChartedCoordinate(1,2);
+    let c4=ChartedCoordinate(2,1);
+    let c5=ChartedCoordinate(0,0);
+    println!("c1, {:?}", ChartedPaths::coordinates_to_direction(center,c1).unwrap());
+    println!("c2, {:?}", ChartedPaths::coordinates_to_direction(center,c2).unwrap());
+    println!("c3, {:?}", ChartedPaths::coordinates_to_direction(center,c3).unwrap());
+    println!("c4, {:?}", ChartedPaths::coordinates_to_direction(center,c4).unwrap());
+    println!("c5, {:?}", ChartedPaths::coordinates_to_direction(c5,c1).unwrap());
 }
 
 
