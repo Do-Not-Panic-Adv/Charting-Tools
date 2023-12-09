@@ -74,6 +74,9 @@ use crate::ChartingTool;
 ///     Evaluates the cost of the shortest path between two coordinates using
 ///     Dijkstra algorithm (Complexity: O((V+E) log V). If the coordinates are out of bounds
 ///     or if there isn't a path between them it returns None.
+///     ***NOTE***: as said in the introduction the entire structure and functions works on the
+///     discovered tiles, so both coordinates passed to the function must be in the robot_map passed
+///     in the function initialization.
 ///     Example:
 ///
 ///         fn process_tick(& mut self, world:&mut World){
@@ -99,6 +102,9 @@ use crate::ChartingTool;
 ///    from one coordinate to another with the best possible energy consumption. NOTE: the path
 ///    comprehend both the from  coordinate and the end coordinate (So if the robot wants to move
 ///    to the objective tile it can skip to move to the first coordinate).
+///    ***NOTE***: as said in the introduction the entire structure and functions works on the
+///     discovered tiles, so both coordinates passed to the function must be in the robot_map passed
+///     in the function initialization.
 ///    Example:
 ///
 ///         fn process_tick(& mut self, world:&mut World){
@@ -108,10 +114,11 @@ use crate::ChartingTool;
 ///             match best_path {
 ///                None => { //path not found}
 ///                 Some(path) => {//cost = path.0, coordinates=path.1
-///                     for i in 1..path.1.len(){ //movin
+///                     for i in 1..path.1.len(){ //moving the robot
+///                         let  my_coordinate =ChartedCoordinate::from(self.get_coordinate());
 ///                         let updated_view= match go(self, world,
 ///                                     ChartedPaths::coordinates_to_direction(
-///                                         my_coordinate,destination).unwrap())){
+///                                         my_coordinate,path.1[i]).unwrap())){
 ///                             Ok((view,_)) => {Some(view)}
 ///                             Err(_) => {None}
 ///                         };
@@ -392,7 +399,7 @@ macro_rules! set_tile_type {
 }
 
 #[test]
-fn directions(){
+fn test_directions(){
     let center=ChartedCoordinate(1,1);
     let c1=ChartedCoordinate(0,1);
     let c2=ChartedCoordinate(1,0);
@@ -404,81 +411,4 @@ fn directions(){
     println!("c3, {:?}", ChartedPaths::coordinates_to_direction(center,c3).unwrap());
     println!("c4, {:?}", ChartedPaths::coordinates_to_direction(center,c4).unwrap());
     println!("c5, {:?}", ChartedPaths::coordinates_to_direction(c5,c1).unwrap());
-}
-
-
-#[test]
-fn test_correct_calls() {
-
-    // ------------ Creating the map example at: ./../docfiles/world_example.png ------------
-    let walkable = Tile {
-        tile_type: TileType::Sand,
-        content: Content::Rock(1),
-        elevation: 0,
-    };
-
-    let not_walkable = Tile {
-        tile_type: TileType::DeepWater,
-        content: Content::Coin(1),
-        elevation: 10,
-    };
-
-    let mut robot_map = Vec::new();
-
-    for i in 0..5 {
-        let mut row_vector = Vec::new();
-        for _ in 0..5 {
-            if i == 2 || i == 4 {
-                row_vector.push(Some(not_walkable.clone())); //t10 -->t14 && t20 -->t24
-            } else {
-                row_vector.push(Some(walkable.clone()));
-            }
-        }
-        robot_map.push(row_vector);
-    }
-
-    set_tile_type!(robot_map, 0, 3, TileType::DeepWater);
-    //t3
-    set_tile_type!(robot_map, 0, 4, TileType::Teleport(true));
-    // t4
-    set_tile_type!(robot_map, 1, 1, TileType::DeepWater);
-    //t6
-    set_tile_type!(robot_map, 1, 2, TileType::Teleport(true));
-    //t7
-    set_tile_type!(robot_map, 3, 4, TileType::Teleport(true)); //t18
-
-    // ------------ End of "robot_map" initialization  ------------
-
-    // let pathfinder=PathFinder::from_map(&robot_map);
-    // // Builds the PathFinder from the robot_map
-    //
-    // let cost_one = pathfinder.shortest_path_cost((0,0), (0,4));
-    // // evaluates cost from tile t0 to t4. NB: there is the teleport.
-    //
-    // let cost_two = pathfinder.shortest_path_cost_a_star((0,0), (1,4));
-    // // evaluates cost from tile t0 to t9
-    //
-    // println!("The cost from (0,0) to (0,4) is: {:?}", cost_one.unwrap());
-    // assert_eq!(6,cost_one.unwrap());
-    //
-    // println!("The cost from (0,0) to (1,4) is: {:?}", cost_two.unwrap());
-    // assert_eq!(5,cost_two.unwrap());
-    //
-    // let path=pathfinder.shortest_path((0,0), (0,4));
-    // // evaluates the cost and the shortest path from t0 to t4. NB: there is the teleport
-    //
-    // for i in path.clone().unwrap().1{
-    //     // iterate over the shortest path coordinates
-    //     println!("{:?}",i);
-    // }
-    //
-    // assert_eq!(path.unwrap().1,vec![
-    //     (0, 0),
-    //     (0, 1),
-    //     (0, 2),
-    //     (1, 2),
-    //     (1,3),
-    //     (1,4),
-    //     (0, 4)
-    // ])
 }
