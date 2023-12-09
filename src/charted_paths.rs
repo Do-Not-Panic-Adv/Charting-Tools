@@ -112,13 +112,15 @@ use crate::ChartingTool;
 ///             let destination = ChartedCoordinate(1, 2);
 ///             let best_path=cp.shortest_path(my_coordinate,destination);
 ///             match best_path {
-///                None => { //path not found}
-///                 Some(path) => {//cost = path.0, coordinates=path.1
+///                None => {
+///                     //path not found
+///                }
+///                Some(path) => {//cost = path.0, coordinates=path.1
 ///                     for i in 1..path.1.len(){ //moving the robot
 ///                         let  my_coordinate =ChartedCoordinate::from(self.get_coordinate());
 ///                         let updated_view= match go(self, world,
 ///                                     ChartedPaths::coordinates_to_direction(
-///                                         my_coordinate,path.1[i]).unwrap())){
+///                                         my_coordinate,path.1[i]).unwrap()){
 ///                             Ok((view,_)) => {Some(view)}
 ///                             Err(_) => {None}
 ///                         };
