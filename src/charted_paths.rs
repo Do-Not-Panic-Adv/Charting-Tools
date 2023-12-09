@@ -220,7 +220,7 @@ impl ChartedPaths {
         let result = dijkstra(&self.graph,
                               self.indexes[from.0][from.1].unwrap(),
                               self.indexes[to.0][to.1], |e| *e.weight());
-        let cost = result.get(&self.indexes[0][4].unwrap());
+        let cost = result.get(&self.indexes[to.0][to.1].unwrap());
         return match cost {
             None => { None }
             Some(x) => { Some(*x) }
