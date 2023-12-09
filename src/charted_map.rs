@@ -54,7 +54,7 @@ impl MapKey for Content {
     }
 
     fn from(tile: &Tile) -> Self {
-        MapKey::to_default(&tile.content)
+        tile.content.clone()
     }
 }
 
