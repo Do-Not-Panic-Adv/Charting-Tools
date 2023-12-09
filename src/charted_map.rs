@@ -20,11 +20,15 @@ pub trait MapKey: Clone + Debug + Hash + Eq + PartialEq {
 
 impl MapKey for Tile {
     fn to_default(&self) -> Self {
-        self.clone()
+        Tile {
+            tile_type: self.tile_type,
+            content: self.content.to_default(),
+            elevation: 0,
+        }
     }
 
     fn get_quantity(&self) -> usize {
-        self.content.get_quantity()
+        self.elevation
     }
 
     fn from(tile: &Tile) -> Self {
@@ -104,6 +108,7 @@ impl<K: MapKey> ChartingTool for ChartedMap<K> {
         }
     }
 }
+
 impl<K: MapKey> From<Vec<Vec<Tile>>> for ChartedMap<K> {
     fn from(value: Vec<Vec<Tile>>) -> Self {
         let mut ret_map = ChartedMap::new();
@@ -134,8 +139,7 @@ impl<K: MapKey> From<Vec<Vec<Option<Tile>>>> for ChartedMap<K> {
 }
 
 impl<K: MapKey> ChartedMap<K> {
-
-    fn iter(&self) -> Iter<'_, K, Vec<(ChartedCoordinate, usize)>> {
+    pub fn iter(&self) -> Iter<'_, K, Vec<(ChartedCoordinate, usize)>> {
         self.map.iter()
     }
     pub fn save(&mut self, poi: &K, coordinate: &ChartedCoordinate) {
@@ -148,11 +152,11 @@ impl<K: MapKey> ChartedMap<K> {
     }
 
     pub fn get(&self, poi: &K) -> Option<&Vec<(ChartedCoordinate, usize)>> {
-        self.map.get(poi)
+        self.map.get(&poi.to_default())
     }
 
-    pub fn get_mut(&mut self, poi: &K) -> Option<&mut Vec<(ChartedCoordinate, usize)>> {
-        self.map.get_mut(poi)
+    fn get_mut(&mut self, poi: &K) -> Option<&mut Vec<(ChartedCoordinate, usize)>> {
+        self.map.get_mut(&poi.to_default())
     }
 
     pub fn get_most(&self, poi: &K) -> Option<(ChartedCoordinate, usize)> {
@@ -170,6 +174,25 @@ impl<K: MapKey> ChartedMap<K> {
                 Some((coordinate, max))
             }
         }
+    }
+
+    pub fn remove(&mut self, poi: &K, coordinate: ChartedCoordinate) -> Result<(), u8>{
+        match self.get_mut(poi) {
+            None => Err(1),
+            Some(found) => {
+                for (i, (c, _)) in found.iter().enumerate() {
+                    if *c == coordinate {
+                        found.remove(i);
+                        return Ok(());
+                    }
+                }
+                Err(2)
+            }
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.map.clear()
     }
 }
 
@@ -213,8 +236,8 @@ fn charted_map_test() {
     map_tile_type.save(&tile_type2, &c2);
     map_tile_type.save(&tile_type3, &c3);
 
-    for i in map_content.iter(){
-        print!("test iter: {:?}\t",i.0 );
+    for i in map_content.iter() {
+        print!("test iter: {:?}\t", i.0);
     }
     println!("{}", map_content);
     println!("{}", map_tile_type);

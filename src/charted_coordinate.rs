@@ -135,3 +135,9 @@ impl Sub<(usize, usize)> for ChartedCoordinate {
         Self(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
+
+impl PartialEq for ChartedCoordinate {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0 && self.1 == other.1
+    }
+}
