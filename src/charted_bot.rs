@@ -1,28 +1,34 @@
 use std::usize;
 
 use robotics_lib::{
-    interface::{discover_tiles, robot_map, Direction},
+    interface::{Direction, discover_tiles, robot_map},
     runner::Runnable,
     utils::LibError,
     world::World,
 };
 
 use crate::charted_coordinate::ChartedCoordinate;
+use crate::{ChartingTool, New};
 
+#[derive(Debug, Clone)]
 pub struct ChartedBot {
     coordinates: ChartedCoordinate,
 }
+impl ChartingTool for ChartedBot{}
+impl New for ChartedBot {
+    fn new() -> Self {
+        ChartedBot { coordinates: ChartedCoordinate(0, 0) }
+    }
+}
 
 impl ChartedBot {
-    pub fn new(coordinates: ChartedCoordinate) -> Self {
-        ChartedBot { coordinates }
+    pub fn init(&mut self, coordinates: ChartedCoordinate) {
+        self.coordinates = coordinates;
     }
-
     pub fn discover_line(
         &mut self,
         robot: &mut impl Runnable,
         world: &mut World,
-
         length: usize,
         width: usize,
         direction: Direction,
