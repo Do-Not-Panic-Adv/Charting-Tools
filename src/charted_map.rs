@@ -2,18 +2,23 @@ use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
+use std::ops::Range;
 
 use robotics_lib::world::tile::{Content, Tile, TileType};
 
+use crate::{ChartingTool, New};
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::ChartingTool;
 
 /// # Trait: ChartingTool
 /// it is an internal trait that defines what can be used as a generic for ChartedMap
 ///
+/// implemented for:
+/// - robotics_lib::world::tile::Content
+/// - robotics_lib::world::tile::TileType
+/// - robotics_lib::world::tile::Tile
 pub trait MapKey: Clone + Debug + Hash + Eq + PartialEq {
     fn to_default(&self) -> Self;
-    fn get_quantity(&self) -> usize;
+    fn get_quantity(&self) -> SavedQuantity;
 
     fn from(tile: &Tile) -> Self;
 }
@@ -27,8 +32,8 @@ impl MapKey for Tile {
         }
     }
 
-    fn get_quantity(&self) -> usize {
-        self.elevation
+    fn get_quantity(&self) -> SavedQuantity {
+        SavedQuantity::TileElevation(self.elevation)
     }
 
     fn from(tile: &Tile) -> Self {
@@ -41,7 +46,7 @@ impl MapKey for Content {
         self.to_default()
     }
 
-    fn get_quantity(&self) -> usize {
+    fn get_quantity(&self) -> SavedQuantity {
         match self {
             Content::Rock(x)
             | Content::Tree(x)
@@ -51,9 +56,10 @@ impl MapKey for Content {
             | Content::Market(x)
             | Content::JollyBlock(x)
             | Content::Bush(x)
-            | Content::Fish(x) => x.to_owned(),
-            Content::Fire | Content::Building | Content::Scarecrow | Content::Bin(_) | Content::Crate(_) | Content::Bank(_) => 1,
-            Content::None => 0,
+            | Content::Fish(x) => SavedQuantity::ContentQuantity(x.to_owned()),
+            Content::Bin(x) | Content::Crate(x) | Content::Bank(x) => SavedQuantity::ContentRange(x.to_owned()),
+            Content::Fire | Content::Building | Content::Scarecrow |
+            Content::None => SavedQuantity::None,
         }
     }
 
@@ -67,12 +73,71 @@ impl MapKey for TileType {
         self.clone()
     }
 
-    fn get_quantity(&self) -> usize {
-        1usize
+    fn get_quantity(&self) -> SavedQuantity {
+        SavedQuantity::None
     }
 
     fn from(tile: &Tile) -> Self {
         MapKey::to_default(&tile.tile_type)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SavedQuantity {
+    None,
+    ContentQuantity(usize),
+    ContentRange(Range<usize>),
+    TileElevation(usize),
+}
+
+impl SavedQuantity {
+    pub fn is_some(&self) -> bool {
+        match self {
+            SavedQuantity::None => false,
+            _ => true,
+        }
+    }
+    pub fn is_nome(&self) -> bool {
+        match self {
+            SavedQuantity::None => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_usize(&self) -> bool {
+        match self {
+            SavedQuantity::TileElevation(_) | SavedQuantity::ContentQuantity(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_range(&self) -> bool {
+        match self {
+            SavedQuantity::ContentRange(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq for SavedQuantity {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SavedQuantity::ContentRange(a), SavedQuantity::ContentRange(b)) => a == b,
+            (SavedQuantity::ContentQuantity(a), SavedQuantity::ContentQuantity(b))
+            | (SavedQuantity::TileElevation(a), SavedQuantity::TileElevation(b)) => *a == *b,
+            _ => false
+        }
+    }
+}
+
+impl Display for SavedQuantity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            SavedQuantity::None => "None".to_string(),
+            SavedQuantity::ContentQuantity(q) => q.to_string(),
+            SavedQuantity::ContentRange(r) => format!("{:?}", r),
+            SavedQuantity::TileElevation(e) => e.to_string(),
+        })
     }
 }
 
@@ -97,17 +162,12 @@ impl MapKey for TileType {
 ///
 ///     assert_eq!(retrieved, my_tile)
 ///
+#[derive(Debug, Clone, PartialEq)]
 pub struct ChartedMap<K: MapKey> {
-    map: HashMap<K, Vec<(ChartedCoordinate, usize)>>,
+    map: HashMap<K, Vec<(ChartedCoordinate, SavedQuantity)>>,
 }
 
-impl<K: MapKey> ChartingTool for ChartedMap<K> {
-    fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-        }
-    }
-}
+impl<K: MapKey> ChartingTool for ChartedMap<K> {}
 
 impl<K: MapKey> From<Vec<Vec<Tile>>> for ChartedMap<K> {
     fn from(value: Vec<Vec<Tile>>) -> Self {
@@ -138,8 +198,16 @@ impl<K: MapKey> From<Vec<Vec<Option<Tile>>>> for ChartedMap<K> {
     }
 }
 
+impl<K: MapKey> New for ChartedMap<K> {
+    fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+}
+
 impl<K: MapKey> ChartedMap<K> {
-    pub fn iter(&self) -> Iter<'_, K, Vec<(ChartedCoordinate, usize)>> {
+    pub fn iter(&self) -> Iter<'_, K, Vec<(ChartedCoordinate, SavedQuantity)>> {
         self.map.iter()
     }
     pub fn save(&mut self, poi: &K, coordinate: &ChartedCoordinate) {
@@ -151,11 +219,11 @@ impl<K: MapKey> ChartedMap<K> {
         };
     }
 
-    pub fn get(&self, poi: &K) -> Option<&Vec<(ChartedCoordinate, usize)>> {
+    pub fn get(&self, poi: &K) -> Option<&Vec<(ChartedCoordinate, SavedQuantity)>> {
         self.map.get(&poi.to_default())
     }
 
-    fn get_mut(&mut self, poi: &K) -> Option<&mut Vec<(ChartedCoordinate, usize)>> {
+    fn get_mut(&mut self, poi: &K) -> Option<&mut Vec<(ChartedCoordinate, SavedQuantity)>> {
         self.map.get_mut(&poi.to_default())
     }
 
@@ -166,9 +234,20 @@ impl<K: MapKey> ChartedMap<K> {
                 let mut coordinate = ChartedCoordinate::default();
                 let mut max = 0usize;
                 for (c, s) in pois.iter() {
-                    if *s > max {
-                        max = *s;
-                        coordinate = ChartedCoordinate::from(c);
+                    match s {
+                        SavedQuantity::None => {}
+                        SavedQuantity::ContentQuantity(q) | SavedQuantity::TileElevation(q) => {
+                            if *q > max {
+                                max = *q;
+                                coordinate = ChartedCoordinate::from(c);
+                            }
+                        }
+                        SavedQuantity::ContentRange(r) => {
+                            if r.len() > max {
+                                max = r.len();
+                                coordinate = ChartedCoordinate::from(c);
+                            }
+                        }
                     }
                 }
                 Some((coordinate, max))
@@ -176,7 +255,7 @@ impl<K: MapKey> ChartedMap<K> {
         }
     }
 
-    pub fn remove(&mut self, poi: &K, coordinate: ChartedCoordinate) -> Result<(), u8>{
+    pub fn remove(&mut self, poi: &K, coordinate: ChartedCoordinate) -> Result<(), u8> {
         match self.get_mut(poi) {
             None => Err(1),
             Some(found) => {

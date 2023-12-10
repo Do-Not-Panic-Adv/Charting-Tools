@@ -3,14 +3,14 @@ use std::collections::HashMap;
 use petgraph::{Graph, Undirected};
 use petgraph::algo::{astar, dijkstra};
 use petgraph::graph::{EdgeIndex, NodeIndex, UnGraph};
+use robotics_lib::interface::Direction;
 use robotics_lib::interface::look_at_sky;
 use robotics_lib::utils::calculate_cost_go_with_environment;
-use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::tile::{Tile, TileType};
 use robotics_lib::world::World;
-use robotics_lib::interface::Direction;
-use robotics_lib::utils::LibError::ContentValueIsHigherThanMax;
+
+use crate::{ChartingTool, New};
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::ChartingTool;
 
 /// -----Welcome to the ChartedPaths!-----
 /// The idea behind the ChartedPaths is to allow the user to better interact with the robot_map
@@ -136,13 +136,16 @@ use crate::ChartingTool;
 ///     (1,0) then he needs to pass Direction::Down to the go interface.
 ///     Example
 ///
+#[derive(Debug, Clone)]
 pub struct ChartedPaths {
     pub graph: Graph<ChartedCoordinate, u32, Undirected>,
     pub indexes: Vec<Vec<Option<NodeIndex>>>,
     pub teleports_edges: HashMap<EdgeIndex, bool>,
 }
 
-impl ChartingTool for ChartedPaths {
+impl ChartingTool for ChartedPaths {}
+
+impl New for ChartedPaths {
     fn new() -> Self {
         ChartedPaths {
             graph: Default::default(),
@@ -153,9 +156,6 @@ impl ChartingTool for ChartedPaths {
 }
 
 #[allow(unused)]
-
-
-
 impl ChartedPaths {
     pub fn init(&mut self, robot_map: &Vec<Vec<Option<Tile>>>, world: &World) {
         self.graph = UnGraph::<ChartedCoordinate, u32>::new_undirected();
@@ -286,12 +286,11 @@ impl ChartedPaths {
         };
     }
 
-    pub fn coordinates_to_direction(from: ChartedCoordinate, to: ChartedCoordinate) -> Result<Direction, ()>{
-
+    pub fn coordinates_to_direction(from: ChartedCoordinate, to: ChartedCoordinate) -> Result<Direction, ()> {
         if from.1 > to.1 {
             return Ok(Direction::Left);
         }
-        if from.1 < to.1{
+        if from.1 < to.1 {
             return Ok(Direction::Right);
         }
         if from.0 > to.0 {
@@ -401,16 +400,16 @@ macro_rules! set_tile_type {
 }
 
 #[test]
-fn test_directions(){
-    let center=ChartedCoordinate(1,1);
-    let c1=ChartedCoordinate(0,1);
-    let c2=ChartedCoordinate(1,0);
-    let c3=ChartedCoordinate(1,2);
-    let c4=ChartedCoordinate(2,1);
-    let c5=ChartedCoordinate(0,0);
-    println!("c1, {:?}", ChartedPaths::coordinates_to_direction(center,c1).unwrap());
-    println!("c2, {:?}", ChartedPaths::coordinates_to_direction(center,c2).unwrap());
-    println!("c3, {:?}", ChartedPaths::coordinates_to_direction(center,c3).unwrap());
-    println!("c4, {:?}", ChartedPaths::coordinates_to_direction(center,c4).unwrap());
-    println!("c5, {:?}", ChartedPaths::coordinates_to_direction(c5,c1).unwrap());
+fn test_directions() {
+    let center = ChartedCoordinate(1, 1);
+    let c1 = ChartedCoordinate(0, 1);
+    let c2 = ChartedCoordinate(1, 0);
+    let c3 = ChartedCoordinate(1, 2);
+    let c4 = ChartedCoordinate(2, 1);
+    let c5 = ChartedCoordinate(0, 0);
+    println!("c1, {:?}", ChartedPaths::coordinates_to_direction(center, c1).unwrap());
+    println!("c2, {:?}", ChartedPaths::coordinates_to_direction(center, c2).unwrap());
+    println!("c3, {:?}", ChartedPaths::coordinates_to_direction(center, c3).unwrap());
+    println!("c4, {:?}", ChartedPaths::coordinates_to_direction(center, c4).unwrap());
+    println!("c5, {:?}", ChartedPaths::coordinates_to_direction(c5, c1).unwrap());
 }

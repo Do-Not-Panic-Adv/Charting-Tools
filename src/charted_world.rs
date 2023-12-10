@@ -6,14 +6,17 @@ use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
+use crate::{ChartingTool, New};
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::ChartingTool;
 
+#[derive(Debug, Clone)]
 pub struct ChartedWorld {
     map: Vec<Vec<Option<Tile>>>,
 }
 
-impl ChartingTool for ChartedWorld {
+impl ChartingTool for ChartedWorld {}
+
+impl New for ChartedWorld {
     fn new() -> Self {
         Self {
             map: Vec::default(),

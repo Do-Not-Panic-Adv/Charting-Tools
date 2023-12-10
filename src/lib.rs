@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use robotics_lib::interface::Tools;
 
 pub mod charted_bot;
@@ -37,9 +39,7 @@ pub struct ChartingTools;
 impl Tools for ChartingTools {}
 
 impl ChartingTools {
-    pub fn tool<T>() -> T
-    where
-        T: ChartingTool,
+    pub fn tool<T: ChartingTool + New>() -> T
     {
         T::new()
     }
@@ -48,6 +48,8 @@ impl ChartingTools {
 /// # Trait: ChartingTool
 /// it is an internal trait that defines what can be used by ChartingTools::tool
 ///
-pub trait ChartingTool {
+pub trait ChartingTool: Debug {}
+
+pub trait New {
     fn new() -> Self;
 }
