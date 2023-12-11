@@ -9,17 +9,19 @@ use robotics_lib::world::tile::{Content, Tile, TileType};
 use crate::charted_coordinate::ChartedCoordinate;
 use crate::{hidden::New, ChartingTool, NUMBER};
 
-/// # Trait: ChartingTool
+/// # Trait: MapKey
 /// it is an internal trait that defines what can be used as a generic for ChartedMap
 ///
 /// implemented for:
-/// - robotics_lib::world::tile::Content
-/// - robotics_lib::world::tile::TileType
-/// - robotics_lib::world::tile::Tile
+/// -       robotics_lib::world::tile::Content
+/// -       robotics_lib::world::tile::TileType
+/// -       robotics_lib::world::tile::Tile
 pub trait MapKey: Clone + Debug + Hash + Eq + PartialEq {
+    /// returns a default value for the relevant datatype
     fn to_default(&self) -> Self;
+    /// returns a quantity for the relevant datatype
     fn get_quantity(&self) -> SavedQuantity;
-
+    /// obtains the desired type from a Tile
     fn from(tile: &Tile) -> Self;
 }
 
@@ -81,6 +83,29 @@ impl MapKey for TileType {
     }
 }
 
+/// # Enum: SavedType
+/// describes the possible values saved inside the ChartedMap
+/// possible values are:
+/// -       None
+/// -       ContentQuantity(usize),
+/// -       ContentRange(Range<usize>),
+/// -       TileElevation(usize),
+///
+/// ## Example
+///```
+/// use charting_tools::ChartingTools;
+/// use robotics_lib::world::tile::TileType;
+/// use charting_tools::charted_coordinate::ChartedCoordinate;
+/// use charting_tools::charted_map::ChartedMap;
+///
+/// let mut cm = ChartingTools::tool::<ChartedMap<TileType>>();
+///     cm.save(TileType::Snow, ChartedCoordinate::default());
+///
+///     let res = cm.get(TileType::Snow);
+///     if res.unwrap()[0].1.is_none() {
+///         println!("quack");
+///     }
+/// ```
 #[derive(Debug, Clone)]
 pub enum SavedQuantity {
     None,
@@ -90,12 +115,19 @@ pub enum SavedQuantity {
 }
 
 impl SavedQuantity {
+    /// returns true if there is any saved value
+    /// which is not
+    ///
+    ///     SavedQuantity::None
     pub fn is_some(&self) -> bool {
         match self {
             | SavedQuantity::None => false,
             | _ => true,
         }
     }
+    /// returns true if the value is of type
+    ///
+    ///     SavedQuantity::None
     pub fn is_nome(&self) -> bool {
         match self {
             | SavedQuantity::None => true,
@@ -103,6 +135,12 @@ impl SavedQuantity {
         }
     }
 
+    /// returns true if the value is of type
+    ///
+    ///     SavedQuantity::TileElevation(_)
+    /// or
+    ///
+    ///     SavedQuantity::ContentQuantity(_)
     pub fn is_usize(&self) -> bool {
         match self {
             | SavedQuantity::TileElevation(_) | SavedQuantity::ContentQuantity(_) => true,
@@ -110,6 +148,9 @@ impl SavedQuantity {
         }
     }
 
+    /// returns true if the value is of type
+    ///
+    ///     SavedQuantity::ContentRange(_)
     pub fn is_range(&self) -> bool {
         match self {
             | SavedQuantity::ContentRange(_) => true,
@@ -154,17 +195,29 @@ impl Display for SavedQuantity {
 ///
 /// ## Examples
 ///
-///     let mut cm = ChartingTools::tool::<ChartedMap>();
+/// ```
+/// use robotics_lib::runner::Robot;
+/// use robotics_lib::world::tile::Content;
+/// use robotics_lib::world::World;
+/// use charting_tools::charted_coordinate::ChartedCoordinate;
+/// use charting_tools::charted_map::ChartedMap;
+/// use charting_tools::ChartingTools;
 ///
-///     let my_tile = robotics_lib::interface::robot_view(&my_robot, &my_world);
-///     let my_coordinate = &ChartedCoordinate::from(my_robot.get_coordinate);
 ///
-///     cm.save(&my_tile, &my_coordinate);
+/// let mut cm = ChartingTools::tool::<ChartedMap<Content>>();
 ///
-///     let retrieved = cm.get(&my_tile).unwrap();
+/// // inside loop
+/// # let my_robot = ();
+/// # let my_world = ();
+/// let my_tile = robotics_lib::interface::robot_view(&my_robot, &my_world);
+/// let my_coordinate = &ChartedCoordinate::from(my_robot.coordinate);
 ///
-///     assert_eq!(retrieved, my_tile)
+/// cm.save(&my_tile, &my_coordinate);
 ///
+/// let retrieved = cm.get(&my_tile).unwrap();
+///
+/// assert_eq!(retrieved, my_tile)
+///```
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChartedMap<K: MapKey> {
     map: HashMap<K, Vec<(ChartedCoordinate, SavedQuantity)>>,

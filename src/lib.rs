@@ -15,35 +15,66 @@ lazy_static::lazy_static! {
 }
 
 /// # Tool: Charting tools
-/// contains a selection of utilities that are useful for navigation around the world
+/// contains a selection of utilities that are useful for navigation around the world and discovery
 ///
 /// ## Usage
 /// you can instantiate one of the following utilities
 ///
 /// - ChartedWorld
-///     Vec-based map of discovered tiles
+///
+///     editable vec-based map of discovered tiles
 /// - ChartedMap
+///
 ///     used to save points of interest and retrieve them later
 /// - ChartedPaths
-///     pathfinding algorithms (god help us all)
-/// - ChartingBot
+///
+///     pathfinding algorithms
+/// - ChartedBot
+///
 ///     a way to discover new tiles using energy
-/// - ChartingSomethingElse idk (if we have time)
 ///
 /// by calling
 ///
-///     ChartingTools::tool::<utility_name_here>();
+/// ```
+///     charting_tools::ChartingTools::tool::</*utility_name_here*/>()
+///                 .expect("too many tools used!");
+/// ```
 ///
 /// The function will return the requested struct to be used in your code
 ///
 /// ## Examples
+/// ```
+/// use robotics_lib::world::tile::Content;
+/// use charting_tools::charted_map::ChartedMap;
+/// use charting_tools::ChartingTools;
 ///
-///     let mut cm = ChartingTools::tool::<ChartedMap>();
+/// let mut result = ChartingTools::tool::<ChartedMap<Content>>();
+/// match result {
+///     Ok(_) => {}
+///     Err(_) => {}
+/// }
+/// ```
 pub struct ChartingTools;
 
 impl Tools for ChartingTools {}
 
 impl ChartingTools {
+    /// # Constructor
+    /// if called, it will return the desired ChartingTool,
+    /// while checking that you have not reached the maximum allowed
+    /// number
+    ///
+    /// ## Example
+    /// ```
+    /// use charting_tools::charted_world::ChartedWorld;
+    /// use charting_tools::ChartingTools;
+    ///
+    /// let result = ChartingTools::tool::<ChartedWorld>();
+    /// match result {
+    ///     Ok(world) => println!("got a ChartedWorld"),
+    ///     Err(num) => eprintln!("there are currently {num} tools active, you cannot get another")
+    /// }
+    /// ```
     pub fn tool<T: ChartingTool>() -> Result<T, u8> {
         if let Ok(mut n) = NUMBER.lock() {
             if *n < LIMIT {
@@ -59,11 +90,17 @@ impl ChartingTools {
 }
 
 /// # Trait: ChartingTool
-/// it is an internal trait that defines what can be used by ChartingTools::tool
+/// implemented for all 4 sub-tools,
+/// it is a trait that defines what can be used by ChartingTools::tool
+///
 pub trait ChartingTool: Debug + Drop + hidden::New {}
 
 pub(crate) mod hidden {
     pub trait New {
+        /// # Do not use
+        /// Internal function, only intended for use inside the tool crate
+        ///
+        /// **It will throw a compile-time error if used inside your code**
         fn new() -> Self;
     }
 }
