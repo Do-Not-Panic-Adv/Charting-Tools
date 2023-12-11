@@ -10,7 +10,7 @@ use robotics_lib::world::tile::{Tile, TileType};
 use robotics_lib::world::World;
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, New};
+use crate::{ChartingTool, hidden::New};
 
 /// -----Welcome to the ChartedPaths!-----
 /// The idea behind the ChartedPaths is to allow the user to better interact with the robot_map

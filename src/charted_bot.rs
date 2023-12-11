@@ -8,7 +8,7 @@ use robotics_lib::{
 };
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, New};
+use crate::{ChartingTool, hidden::New};
 
 #[derive(Debug, Clone)]
 pub struct ChartedBot {

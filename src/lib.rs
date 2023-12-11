@@ -38,9 +38,8 @@ pub struct ChartingTools;
 
 impl Tools for ChartingTools {}
 
-#[allow(private_bounds)]
 impl ChartingTools {
-    pub fn tool<T: ChartingTool + New>() -> T {
+    pub fn tool<T: ChartingTool + hidden::New>() -> T {
         T::new()
     }
 }
@@ -49,6 +48,8 @@ impl ChartingTools {
 /// it is an internal trait that defines what can be used by ChartingTools::tool
 pub trait ChartingTool: Debug {}
 
-pub(crate) trait New {
-    fn new() -> Self;
+pub (crate) mod hidden {
+    pub trait New {
+        fn new() -> Self;
+    }
 }

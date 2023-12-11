@@ -7,7 +7,7 @@ use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, New};
+use crate::{ChartingTool, hidden::New};
 
 #[derive(Debug, Clone)]
 pub struct ChartedWorld {
