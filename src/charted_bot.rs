@@ -42,14 +42,14 @@ impl ChartedBot {
         println!("Drone inizialiatto in posizione {:?}", self.coordinates)
     }
 
-    /// # Starts the discovery
+    /// # Performs a line discovery
     /// Starts to discover the map following the given direction
     ///
-    /// # Paramentes
+    /// # Parameters
     /// - robot: A mutable reference to the robot whose personal map has to be discovered.
     /// - world: A mutable reference to the world.
     /// - lenght: The lenght of the strip of tiles to be discovered.
-    /// - width: The width of the strip of tiles to discovered (should be divilible by 3).
+    /// - width: The width of the strip of tiles to discovered (should an odd number).
     /// - direction: The direction in wich the Bot will be heading.
     ///
     /// # Errors
@@ -61,7 +61,10 @@ impl ChartedBot {
     /// - The number of discovered tiles or an error.
     ///
     /// ## Notes
-    /// Tiles that are already present in the robots map will not be checked
+    /// - Tiles that are already present in the robots map will not be checked.
+    /// - Using an even number for the width value will result in a strip as wide as the next odd
+    /// number to one inserted.
+
     pub fn discover_line(
         &mut self,
         robot: &mut impl Runnable,
@@ -69,16 +72,16 @@ impl ChartedBot {
         length: usize,
         width: usize,
         direction: Direction,
-    ) -> Result<i32, LibError> {
+    ) -> Result<usize, LibError> {
         //Calculates cost for the discovery
 
         let to_visit = match direction {
             | Direction::Up => {
                 let iter_x;
                 if self.coordinates.get_col() < 1 {
-                    iter_x = 0..=self.coordinates.get_col() + 1
+                    iter_x = 0..=self.coordinates.get_col() + width / 2;
                 } else {
-                    iter_x = self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1;
+                    iter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
                 }
 
                 let iter_y;
@@ -101,9 +104,9 @@ impl ChartedBot {
                 let inter_x;
                 let inter_y;
                 if self.coordinates.get_col() < 1 {
-                    inter_x = 0..=self.coordinates.get_col() + 1
+                    inter_x = 0..=self.coordinates.get_col() + width / 2;
                 } else {
-                    inter_x = self.coordinates.get_col() - 1..=self.coordinates.get_col() + 1;
+                    inter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
                 }
                 if (self.coordinates.get_row() + length as usize - 1usize) >= robot_map(world).unwrap()[0].len() {
                     inter_y = self.coordinates.get_row()..=robot_map(world).unwrap()[0].len() - 1
@@ -125,9 +128,9 @@ impl ChartedBot {
                 let inter_x;
 
                 if self.coordinates.get_row() < 1 {
-                    inter_y = (0..=self.coordinates.get_row() + 1).rev();
+                    inter_y = (0..=self.coordinates.get_row() + width / 2).rev();
                 } else {
-                    inter_y = (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
+                    inter_y = (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
                 }
 
                 if (self.coordinates.get_col() + length as usize - 1usize) >= robot_map(world).unwrap().len() {
@@ -149,9 +152,9 @@ impl ChartedBot {
                 let int_x;
 
                 if self.coordinates.get_row() < 1 {
-                    int_y = (0..=self.coordinates.get_row() + 1).rev();
+                    int_y = (0..=self.coordinates.get_row() + width / 2).rev();
                 } else {
-                    int_y = (self.coordinates.get_row() - 1..=self.coordinates.get_row() + 1).rev();
+                    int_y = (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
                 }
 
                 if (self.coordinates.get_col() as i32 - length as i32) < 0 {
@@ -192,12 +195,47 @@ impl ChartedBot {
         }
     }
 
-    pub fn discover_path(&mut self, robot: &mut impl Runnable, world: &mut World, width: usize, path: Vec<Direction>) {
+    /// # Performs a path discovery
+    /// Starts to discover the map following a given set of directions
+    ///
+    /// # Parameters
+    /// - robot: A mutable reference to the robot whose personal map has to be discovered.
+    /// - world: A mutable reference to the world.
+    /// - width: The width of the strip of tiles to discovered (should an odd number).
+    /// - path: A list of directions that the Bot will follow.
+    ///
+    /// # Errors
+    /// This function will return an error if during the discovery of the maps,
+    /// the maximum ammount of discoverable tiles is reached  (`LibError::NoMoreDiscoverable`) or the robot does
+    /// not have enough energy to complete the discovery (`LibError::NotEnoughEnergy`).
+    ///
+    /// # Returns
+    /// - The number of discovered tiles or an error.
+    ///
+    /// ## Notes
+    /// - Tiles that are already present in the robots map will not be checked.
+    /// - Using an even number for the width value will result in a strip as wide as the next odd
+    /// number to one inserted.
+
+    pub fn discover_path(
+        &mut self,
+        robot: &mut impl Runnable,
+        world: &mut World,
+        width: usize,
+        path: Vec<Direction>,
+    ) -> Result<usize, LibError> {
+        let mut discovered: usize = 0;
         for d in path {
             Self::move_bot(self, &d);
-            let _ = Self::discover_line(self, robot, world, 1, width, d);
+            match Self::discover_line(self, robot, world, 1, width, d) {
+                | Ok(_) => discovered += 1,
+                | Err(e) => return Err(e),
+            }
         }
+        Ok(discovered)
     }
+
+    //Alters the position of the carting bot given the movements direction.
     pub(crate) fn move_bot(&mut self, direction: &Direction) {
         match direction {
             | Direction::Up => self.coordinates.0 -= 1,
