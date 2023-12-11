@@ -38,6 +38,7 @@ pub struct ChartingTools;
 
 impl Tools for ChartingTools {}
 
+#[allow(private_bounds)]
 impl ChartingTools {
     pub fn tool<T: ChartingTool + New>() -> T {
         T::new()

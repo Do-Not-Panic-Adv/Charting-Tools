@@ -431,31 +431,3 @@ impl ChartedPaths {
         }
     }
 }
-
-// ----------------Test usage only------------------------
-macro_rules! set_tile_type {
-    ($map:expr, $row:expr, $col:expr, $tile_type:expr) => {
-        if let Some(row) = $map.get_mut($row) {
-            if let Some(tile_option) = row.get_mut($col) {
-                if let Some(tile) = tile_option.as_mut() {
-                    tile.tile_type = $tile_type;
-                }
-            }
-        }
-    };
-}
-
-#[test]
-fn test_directions() {
-    let center = ChartedCoordinate(1, 1);
-    let c1 = ChartedCoordinate(0, 1);
-    let c2 = ChartedCoordinate(1, 0);
-    let c3 = ChartedCoordinate(1, 2);
-    let c4 = ChartedCoordinate(2, 1);
-    let c5 = ChartedCoordinate(0, 0);
-    println!("c1, {:?}", ChartedPaths::coordinates_to_direction(center, c1).unwrap());
-    println!("c2, {:?}", ChartedPaths::coordinates_to_direction(center, c2).unwrap());
-    println!("c3, {:?}", ChartedPaths::coordinates_to_direction(center, c3).unwrap());
-    println!("c4, {:?}", ChartedPaths::coordinates_to_direction(center, c4).unwrap());
-    println!("c5, {:?}", ChartedPaths::coordinates_to_direction(c5, c1).unwrap());
-}
