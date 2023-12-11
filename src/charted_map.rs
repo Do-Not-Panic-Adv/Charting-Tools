@@ -7,7 +7,7 @@ use std::ops::Range;
 use robotics_lib::world::tile::{Content, Tile, TileType};
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{hidden::New, ChartingTool, NUMBER};
+use crate::{reserved::New, ChartingTool, NUMBER};
 
 /// # Trait: MapKey
 /// it is an internal trait that defines what can be used as a generic for ChartedMap

@@ -89,13 +89,14 @@ impl ChartingTools {
     }
 }
 
+#[allow(drop_bounds)]
 /// # Trait: ChartingTool
 /// implemented for all 4 sub-tools,
 /// it is a trait that defines what can be used by ChartingTools::tool
 ///
-pub trait ChartingTool: Debug + Drop + hidden::New {}
+pub trait ChartingTool: Debug + Drop + reserved::New {}
 
-pub(crate) mod hidden {
+pub(crate) mod reserved {
     pub trait New {
         /// # Do not use
         /// Internal function, only intended for use inside the tool crate
