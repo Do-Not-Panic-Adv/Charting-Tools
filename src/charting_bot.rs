@@ -11,11 +11,11 @@ use crate::charted_coordinate::ChartedCoordinate;
 use crate::{hidden::New, ChartingTool, NUMBER};
 
 #[derive(Debug, Clone)]
-pub struct ChartedBot {
+pub struct ChartingBot {
     coordinates: ChartedCoordinate,
 }
 
-impl Drop for ChartedBot {
+impl Drop for ChartingBot {
     fn drop(&mut self) {
         if let Ok(mut n) = NUMBER.lock() {
             if *n > 0 {
@@ -25,16 +25,16 @@ impl Drop for ChartedBot {
     }
 }
 
-impl ChartingTool for ChartedBot {}
-impl New for ChartedBot {
+impl ChartingTool for ChartingBot {}
+impl New for ChartingBot {
     fn new() -> Self {
-        ChartedBot {
+        ChartingBot {
             coordinates: ChartedCoordinate(0, 0),
         }
     }
 }
 
-impl ChartedBot {
+impl ChartingBot {
     /// # Initializes the ChartingBot
     /// The starting position of the bot is set to the position of the Robot.
     pub fn init(&mut self, robot: &impl Runnable) {

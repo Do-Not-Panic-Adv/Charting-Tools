@@ -3,11 +3,11 @@ use std::sync::Mutex;
 
 use robotics_lib::interface::Tools;
 
-pub mod charted_bot;
 pub mod charted_coordinate;
 pub mod charted_map;
 pub mod charted_paths;
 pub mod charted_world;
+pub mod charting_bot;
 
 const LIMIT: u8 = 3;
 lazy_static::lazy_static! {
