@@ -4,7 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-#robotics_lib = {registry = "kellnr"}
-#robotics_lib = {git= "https://github.com/Advanced-Programming-2023/Robotic-Lib/", branch="master"}
-robotics_lib = {path = "../Robotic-Lib"}
+robotics_lib = {registry = "kellnr"}
 petgraph = "0.6.4"
