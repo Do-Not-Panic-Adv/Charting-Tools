@@ -26,7 +26,6 @@ impl Drop for ChartedBot {
 }
 
 impl ChartingTool for ChartedBot {}
-
 impl New for ChartedBot {
     fn new() -> Self {
         ChartedBot {
@@ -36,9 +35,33 @@ impl New for ChartedBot {
 }
 
 impl ChartedBot {
-    pub fn init(&mut self, coordinates: ChartedCoordinate) {
-        self.coordinates = coordinates;
+    /// # Initializes the ChartingBot
+    /// The starting position of the bot is set to the position of the Robot.
+    pub fn init(&mut self, robot: &impl Runnable) {
+        self.coordinates = ChartedCoordinate::from(robot.get_coordinate());
+        println!("Drone inizialiatto in posizione {:?}", self.coordinates)
     }
+
+    /// # Starts the discovery
+    /// Starts to discover the map following the given direction
+    ///
+    /// # Paramentes
+    /// - robot: A mutable reference to the robot whose personal map has to be discovered.
+    /// - world: A mutable reference to the world.
+    /// - lenght: The lenght of the strip of tiles to be discovered.
+    /// - width: The width of the strip of tiles to discovered (should be divilible by 3).
+    /// - direction: The direction in wich the Bot will be heading.
+    ///
+    /// # Errors
+    /// This function will return an error if during the discovery of the maps,
+    /// the maximum ammount of discoverable tiles is reached  (`LibError::NoMoreDiscoverable`) or the robot does
+    /// not have enough energy to complete the discovery (`LibError::NotEnoughEnergy`).
+    ///
+    /// # Returns
+    /// - The number of discovered tiles or an error.
+    ///
+    /// ## Notes
+    /// Tiles that are already present in the robots map will not be checked
     pub fn discover_line(
         &mut self,
         robot: &mut impl Runnable,
@@ -94,6 +117,7 @@ impl ChartedBot {
                         tiles.push((y, x))
                     }
                 }
+
                 tiles
             }
             | Direction::Right => {
@@ -142,34 +166,25 @@ impl ChartedBot {
                         tiles.push((y, x))
                     }
                 }
+
                 tiles
             }
         };
 
-        let mut discovered = 0;
-        if robot.get_energy().has_enough_energy((length * width * 3) as usize) {
-            for t in to_visit {
-                if world.get_discoverable() <= 0 {
-                    return Err(LibError::NoMoreDiscovery);
-                }
-                //println!("tile: {:?} in {:?}", robot_map(world).unwrap()[t.0][t.1], t);
-                if !Self::check_discovered(world, t) {
-                    let _ = discover_tiles(robot, world, &[t]);
-                    discovered += 1;
+        let mut discovered: usize = 0;
+
+        for t in to_visit {
+            if !Self::check_discovered(world, t) {
+                match discover_tiles(robot, world, &[t]) {
+                    | Ok(_) => discovered += 1,
+                    | Err(e) => return Err(e),
                 }
             }
-
-            Ok(discovered)
-        } else {
-            Err(LibError::NotEnoughEnergy)
         }
+        Ok(discovered)
     }
 
-    /// .
-    ///
-    /// # Panics
-    ///
-    /// Panics if .
+    /// Checks if a tile in a given coordinale is already present in the robots personal map.
     pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> bool {
         match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
             | Some(_) => true,
