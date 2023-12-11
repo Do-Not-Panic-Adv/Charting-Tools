@@ -39,17 +39,15 @@ pub struct ChartingTools;
 impl Tools for ChartingTools {}
 
 impl ChartingTools {
-    pub fn tool<T: ChartingTool + New>() -> T
-    {
+    pub fn tool<T: ChartingTool + New>() -> T {
         T::new()
     }
 }
 
 /// # Trait: ChartingTool
 /// it is an internal trait that defines what can be used by ChartingTools::tool
-///
 pub trait ChartingTool: Debug {}
 
-pub trait New {
+pub(crate) trait New {
     fn new() -> Self;
 }

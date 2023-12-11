@@ -6,8 +6,8 @@ use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
-use crate::{ChartingTool, New};
 use crate::charted_coordinate::ChartedCoordinate;
+use crate::{ChartingTool, New};
 
 #[derive(Debug, Clone)]
 pub struct ChartedWorld {
@@ -18,17 +18,18 @@ impl ChartingTool for ChartedWorld {}
 
 impl New for ChartedWorld {
     fn new() -> Self {
-        Self {
-            map: Vec::default(),
-        }
+        Self { map: Vec::default() }
     }
 }
 
 impl ChartedWorld {
+    pub fn clear(&mut self) {
+        self.map.clear()
+    }
     pub fn init(&mut self, world: &World) -> Result<(), &str> {
         match robot_map(world) {
-            None => Err("This literally should not be able to happen..."),
-            Some(map) => {
+            | None => Err("This literally should not be able to happen..."),
+            | Some(map) => {
                 self.map = map;
                 Ok(())
             }
@@ -45,11 +46,11 @@ impl ChartedWorld {
 
     pub fn set(&mut self, tile: &Tile, coordinate: ChartedCoordinate) -> Result<(), Tile> {
         match self.at(coordinate) {
-            None => {
+            | None => {
                 self.map[coordinate.0][coordinate.1] = Some(tile.clone());
                 Ok(())
             }
-            Some(old_tile) => Err(old_tile.clone()),
+            | Some(old_tile) => Err(old_tile.clone()),
         }
     }
 
@@ -57,11 +58,16 @@ impl ChartedWorld {
         self.map[coordinate.0][coordinate.1] = Some(tile.clone());
     }
 
-    pub fn set_multiple(&mut self, to_change: &Vec<(&Tile, ChartedCoordinate)>) -> Result<(), (Tile, ChartedCoordinate)> {
+    pub fn set_multiple(
+        &mut self,
+        to_change: &Vec<(&Tile, ChartedCoordinate)>,
+    ) -> Result<(), (Tile, ChartedCoordinate)> {
         for i in to_change {
             match self.set(i.0, i.1) {
-                Ok(_) => {}
-                Err(tile) => { return Err((i.0.clone(), i.1)); }
+                | Ok(_) => {}
+                | Err(_) => {
+                    return Err((i.0.clone(), i.1));
+                }
             }
         }
         Ok(())
@@ -76,7 +82,9 @@ impl ChartedWorld {
 
     pub fn update(&mut self, world: &World, coordinates: &Vec<ChartedCoordinate>) {
         let option = robot_map(world);
-        if option.is_none() { return; }
+        if option.is_none() {
+            return;
+        }
 
         let map = option.unwrap();
         for point in coordinates.iter() {
@@ -102,18 +110,24 @@ impl ChartedWorld {
         }
     }
 
-    pub fn update_discover(&mut self, robot: &mut impl Runnable, world: &mut World, to_discover: &Vec<ChartedCoordinate>)
-                           -> Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
-        return match discover_tiles(robot, world, &to_discover.iter().map(|c| (c.0, c.1)).collect::<Vec<(usize, usize)>>()) {
-            Ok(hm) => {
+    pub fn update_discover(
+        &mut self,
+        robot: &mut impl Runnable,
+        world: &mut World,
+        to_discover: &Vec<ChartedCoordinate>,
+    ) -> Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
+        return match discover_tiles(
+            robot,
+            world,
+            &to_discover.iter().map(|c| (c.0, c.1)).collect::<Vec<(usize, usize)>>(),
+        ) {
+            | Ok(hm) => {
                 for ((x, y), tile) in hm.iter() {
                     self.map[*x][*y] = tile.clone();
                 }
                 Ok(hm)
             }
-            Err(err) => {
-                Err(err)
-            }
+            | Err(err) => Err(err),
         };
     }
 
@@ -133,6 +147,3 @@ impl ChartedWorld {
         }
     }
 }
-
-#[test]
-fn test() {}
