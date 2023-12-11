@@ -7,11 +7,21 @@ use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, hidden::New};
+use crate::{hidden::New, ChartingTool, NUMBER};
 
 #[derive(Debug, Clone)]
 pub struct ChartedWorld {
     map: Vec<Vec<Option<Tile>>>,
+}
+
+impl Drop for ChartedWorld {
+    fn drop(&mut self) {
+        if let Ok(mut n) = NUMBER.lock() {
+            if *n > 0 {
+                *n = *n - 1;
+            }
+        }
+    }
 }
 
 impl ChartingTool for ChartedWorld {}

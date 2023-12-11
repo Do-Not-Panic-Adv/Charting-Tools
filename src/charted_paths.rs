@@ -10,7 +10,7 @@ use robotics_lib::world::tile::{Tile, TileType};
 use robotics_lib::world::World;
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, hidden::New};
+use crate::{hidden::New, ChartingTool, NUMBER};
 
 /// -----Welcome to the ChartedPaths!-----
 /// The idea behind the ChartedPaths is to allow the user to better interact with the robot_map
@@ -141,6 +141,16 @@ pub struct ChartedPaths {
     pub graph: Graph<ChartedCoordinate, u32, Undirected>,
     pub indexes: Vec<Vec<Option<NodeIndex>>>,
     pub teleports_edges: HashMap<EdgeIndex, bool>,
+}
+
+impl Drop for ChartedPaths {
+    fn drop(&mut self) {
+        if let Ok(mut n) = NUMBER.lock() {
+            if *n > 0 {
+                *n = *n - 1;
+            }
+        }
+    }
 }
 
 impl ChartingTool for ChartedPaths {}

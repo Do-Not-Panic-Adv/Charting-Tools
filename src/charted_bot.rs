@@ -8,11 +8,21 @@ use robotics_lib::{
 };
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, hidden::New};
+use crate::{hidden::New, ChartingTool, NUMBER};
 
 #[derive(Debug, Clone)]
 pub struct ChartedBot {
     coordinates: ChartedCoordinate,
+}
+
+impl Drop for ChartedBot {
+    fn drop(&mut self) {
+        if let Ok(mut n) = NUMBER.lock() {
+            if *n > 0 {
+                *n = *n - 1;
+            }
+        }
+    }
 }
 
 impl ChartingTool for ChartedBot {}

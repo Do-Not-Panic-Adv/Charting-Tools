@@ -7,7 +7,7 @@ use std::ops::Range;
 use robotics_lib::world::tile::{Content, Tile, TileType};
 
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{ChartingTool, hidden::New};
+use crate::{hidden::New, ChartingTool, NUMBER};
 
 /// # Trait: ChartingTool
 /// it is an internal trait that defines what can be used as a generic for ChartedMap
@@ -168,6 +168,16 @@ impl Display for SavedQuantity {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ChartedMap<K: MapKey> {
     map: HashMap<K, Vec<(ChartedCoordinate, SavedQuantity)>>,
+}
+
+impl<K: MapKey> Drop for ChartedMap<K> {
+    fn drop(&mut self) {
+        if let Ok(mut n) = NUMBER.lock() {
+            if *n > 0 {
+                *n = *n - 1;
+            }
+        }
+    }
 }
 
 impl<K: MapKey> ChartingTool for ChartedMap<K> {}
