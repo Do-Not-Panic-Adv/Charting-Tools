@@ -26,12 +26,12 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 /// would be not very efficient and not very useful.
 ///
 /// Let's analyze the fields of the struct:
-///     - graph: Graph<ChartedCoordinate, u32, Undirected>.
+///     - graph: Graph`<ChartedCoordinate, u32, Undirected>`.
 ///          represents the undirected graph
 ///          the node contains a ChartedCoordinate (usize,usize) of the discovered tile
 ///          the edge between two nodes is the cost (u32) that the robot should spend by going
 ///          from the coordinate of node_1 to the coordinate of node_2
-///     - indexes: Vec<Vec<Option<NodeIndex>>>.
+///     - indexes: Vec`<Vec<Option<NodeIndex>>>`.
 ///          it's a map nxn that contains the "conversion" of the map's coordinates to their
 ///          references in the graph.
 ///     - teleports_edges: HashMap<EdgeIndex, bool>.
@@ -51,7 +51,7 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///
 /// Let's analyze the public functions provided with the ChartedPaths structure
 ///
-/// 1) pub fn init(&mut self, &Vec<Vec<Option<Tile>>>, &World)
+/// 1)`pub fn init(&mut self, &Vec<Vec<Option<Tile>>>, &World)`
 ///     Robotic_lib provides a function called robot_map(..) that returns a matrix nxn in which
 ///     are "stored" the discovered tiles (seen or walked over) of the robot while
 ///     the other ones are set to None.
@@ -69,7 +69,7 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///
 ///
 ///
-/// 2) shortest_path_cost(&self, ChartedCoordinate, ChartedCoordinate) -> Option<u32>
+/// 2)`shortest_path_cost(&self, ChartedCoordinate, ChartedCoordinate) -> Option<u32>`
 ///     Takes as parameter two coordinates, "from" and "to" as ChartedCoordinates.
 ///     Evaluates the cost of the shortest path between two coordinates using
 ///     Dijkstra algorithm (Complexity: O((V+E) log V). If the coordinates are out of bounds
@@ -87,13 +87,13 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///
 ///
 ///
-/// 3) shortest_path_cost_a_star(&self, ChartedCoordinate, ChartedCoordinate) -> Option<u32>
+/// 3)`shortest_path_cost_a_star(&self, ChartedCoordinate, ChartedCoordinate) -> Option<u32>`
 ///     Same as shortest_path_cost but inside it uses the A* algorithm
 ///
 ///
 ///
-/// 4) pub fn shortest_path(&self, ChartedCoordinate, ChartedCoordinate) ->
-///         Option<(usize, Vec<ChartedCoordinate>)>
+/// 4)`pub fn shortest_path(&self, ChartedCoordinate, ChartedCoordinate) ->`
+///     `Option<(usize, Vec<ChartedCoordinate>)>`
 ///    Takes as parameter two coordinates, "from" and "to".
 ///    Evaluates both the COST to go from the first coordinate to the second and the PATH using the
 ///    A* algorithm. If the coordinates are out of bounds or if there isn't a path between them
@@ -130,7 +130,7 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///         }
 ///
 ///
-/// 5) pub fn coordinates_to_direction(ChartedCoordinate, ChartedCoordinate) -> Result<Direction, ()>
+/// 5) `pub fn coordinates_to_direction(ChartedCoordinate, ChartedCoordinate) -> Result<Direction, ()>`
 ///     This function converts what is the direction the robot need to move if he want to go from
 ///     a coordinate to another one. For example if the robot is in (0,0) and he wants to move to
 ///     (1,0) then he needs to pass Direction::Down to the go interface.
@@ -152,7 +152,6 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///        }
 ///
 ///        println!("The directions are: {:?}",directions);
-///   ```
 ///
 #[derive(Debug, Clone)]
 pub struct ChartedPaths {
