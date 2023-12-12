@@ -38,14 +38,14 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///          contains the references to the edges in which one of the node is a teleport. Can be
 ///          used for further development or to easily changing the cost of teleport operations.
 ///
-/// NB: since this struct is part of the Charting tool, the "new" function of its trait
-///  implementation
-///  ///     Example:
+/// NB: since this struct is part of the Charting tools, to create the struct use the "tool"
+///     constructor, see lib.rs for more idetails
+///  ##     Example:
 /// ```
 ///
 ///          use charting_tools::charted_paths::ChartedPaths;
-///          use charting_tools::ChartingTool;
-///          let mut charted_paths=ChartedPaths::new();
+///          use charting_tools::ChartingTools;
+///          let mut charted_path = ChartingTools::tool::<ChartedPaths>().unwrap();
 ///
 /// ```
 ///
@@ -60,10 +60,10 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///     energy consumption. Since the cost is evaluated also with respect to the environmental
 ///     conditions is necessary to pass the World & reference
 ///     The function also takes care of the teleport functionality.
-///     Example:
+///     ### Example:
 ///
 ///         fn process_tick(& mut self, world:&mut World){
-///             let mut charted_path = ChartedPaths::new();
+///              let mut charted_path = ChartingTools::tool::<ChartedPaths>().unwrap();
 ///             charted_path.init(&robot_map(world).unwrap(), world);
 ///         }
 ///
@@ -77,7 +77,7 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///     ***NOTE***: as said in the introduction the entire structure and functions works on the
 ///     discovered tiles, so both coordinates passed to the function must be in the robot_map passed
 ///     in the function initialization.
-///     Example:
+///     ## Example:
 ///
 ///         fn process_tick(& mut self, world:&mut World){
 ///             let my_coordinate = ChartedCoordinate::from(self.get_coordinate());
@@ -103,9 +103,9 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///    comprehend both the from  coordinate and the end coordinate (So if the robot wants to move
 ///    to the objective tile it can skip to move to the first coordinate).
 ///    ***NOTE***: as said in the introduction the entire structure and functions works on the
-///     discovered tiles, so both coordinates passed to the function must be in the robot_map passed
-///     in the function initialization.
-///    Example:
+///    discovered tiles, so both coordinates passed to the function must be in the robot_map passed
+///    in the function initialization.
+///    ## Example:
 ///
 ///         fn process_tick(& mut self, world:&mut World){
 ///             let my_coordinate = ChartedCoordinate::from(self.get_coordinate());
@@ -134,7 +134,25 @@ use crate::{reserved::New, ChartingTool, NUMBER};
 ///     This function converts what is the direction the robot need to move if he want to go from
 ///     a coordinate to another one. For example if the robot is in (0,0) and he wants to move to
 ///     (1,0) then he needs to pass Direction::Down to the go interface.
-///     Example
+///     ## Example:
+///     ```
+///       use charting_tools::charted_paths::ChartedPaths;
+///       use charting_tools::charted_coordinate::ChartedCoordinate;
+///       let v=vec![ChartedCoordinate{ 0: 0, 1: 0 }, ChartedCoordinate{ 0: 1, 1: 0 },
+///          ChartedCoordinate{ 0: 1, 1: 1 }];
+///       let mut directions= Vec::new();
+///
+///
+///        for (index,coordinate) in v.iter().enumerate(){
+///            if index < v.len()-1 {
+///                let directions_for_robot=ChartedPaths::coordinates_to_direction(
+///                    *coordinate,v[index+1]);
+///                directions.push(directions_for_robot.unwrap())
+///            }
+///        }
+///
+///        println!("The directions are: {:?}",directions);
+///   ```
 ///
 #[derive(Debug, Clone)]
 pub struct ChartedPaths {
