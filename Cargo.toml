@@ -1,7 +1,9 @@
 [package]
 name = "charting_tools"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+authors = ["Enrico Dalla Cia", "Matteo Bregola", "Marco Pulze", "Riccardo Libanora"]
+readme = "README.md"
 
 [dependencies]
 robotics_lib = {registry = "kellnr"}

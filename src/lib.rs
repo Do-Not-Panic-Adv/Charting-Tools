@@ -11,7 +11,7 @@ pub mod charting_bot;
 
 const LIMIT: u8 = 3;
 lazy_static::lazy_static! {
-    static ref NUMBER: Mutex<u8> = Mutex::new(0 as u8);
+    static ref NUMBER: Mutex<u8> = Mutex::new(0);
 }
 
 /// # Tool: Charting tools
@@ -29,7 +29,7 @@ lazy_static::lazy_static! {
 /// - ChartedPaths
 ///
 ///     pathfinding algorithms
-/// - ChartedBot
+/// - ChartingBot
 ///
 ///     a way to discover new tiles using energy
 ///
