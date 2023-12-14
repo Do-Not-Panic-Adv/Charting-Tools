@@ -1,9 +1,10 @@
+use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 use std::ops::{Add, Sub};
 
 use robotics_lib::world::coordinates::Coordinate;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Hash)]
 /// struct: ChartedCoordinate
 ///
 /// it is simply a custom type compatible with robotics_lib::world::coordinates::Coordinate,
@@ -133,3 +134,31 @@ impl PartialEq for ChartedCoordinate {
         self.0 == other.0 && self.1 == other.1
     }
 }
+
+impl PartialEq<usize> for ChartedCoordinate {
+    fn eq(&self, other: &usize) -> bool {
+        self.0 == *other || self.1 == *other
+    }
+}
+
+impl PartialOrd<usize> for ChartedCoordinate {
+    fn partial_cmp(&self, other: &usize) -> Option<Ordering> {
+        if self < other {
+            Some(Ordering::Less)
+        } else if self == other {
+            Some(Ordering::Equal)
+        } else if self > other {
+            Some(Ordering::Greater)
+        } else { None }
+    }
+
+    fn lt(&self, other: &usize) -> bool {
+        self.0 < *other && self.1 < *other
+    }
+
+    fn gt(&self, other: &usize) -> bool {
+        self.0 > *other && self.1 > *other
+    }
+}
+
+impl Eq for ChartedCoordinate {}

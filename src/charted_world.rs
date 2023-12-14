@@ -6,12 +6,13 @@ use robotics_lib::utils::LibError;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::World;
 
+use crate::{ChartingTool, NUMBER, reserved::New};
 use crate::charted_coordinate::ChartedCoordinate;
-use crate::{reserved::New, ChartingTool, NUMBER};
 
 #[derive(Debug, Clone)]
 pub struct ChartedWorld {
     map: Vec<Vec<Option<Tile>>>,
+    len: usize,
 }
 
 impl Drop for ChartedWorld {
@@ -28,7 +29,7 @@ impl ChartingTool for ChartedWorld {}
 
 impl New for ChartedWorld {
     fn new() -> Self {
-        Self { map: Vec::default() }
+        Self { map: Vec::default(), len: 0 }
     }
 }
 
@@ -40,13 +41,19 @@ impl ChartedWorld {
         match robot_map(world) {
             | None => Err("This literally should not be able to happen..."),
             | Some(map) => {
+                self.len = map.len();
                 self.map = map;
                 Ok(())
             }
         }
     }
 
+    fn check_bounds(&self, coordinate: ChartedCoordinate) -> bool {
+        coordinate < self.len
+    }
+
     pub fn at(&self, coordinate: ChartedCoordinate) -> Option<Tile> {
+        if !self.check_bounds(coordinate) { return None; }
         self.map[coordinate.0][coordinate.1].clone()
     }
 
@@ -54,29 +61,32 @@ impl ChartedWorld {
         &self.map
     }
 
-    pub fn set(&mut self, tile: &Tile, coordinate: ChartedCoordinate) -> Result<(), Tile> {
+    pub fn set(&mut self, tile: &Tile, coordinate: ChartedCoordinate) -> Result<(), (LibError, Option<Tile>)> {
+        if !self.check_bounds(coordinate) { return Err((LibError::OutOfBounds, None)); }
         match self.at(coordinate) {
             | None => {
                 self.map[coordinate.0][coordinate.1] = Some(tile.clone());
                 Ok(())
             }
-            | Some(old_tile) => Err(old_tile.clone()),
+            | Some(old_tile) => Err((LibError::OperationNotAllowed, Some(old_tile.clone()))),
         }
     }
 
-    pub fn set_unchecked(&mut self, tile: &Tile, coordinate: ChartedCoordinate) {
+    pub fn set_unchecked(&mut self, tile: &Tile, coordinate: ChartedCoordinate) -> Result<(), LibError>{
+        if !self.check_bounds(coordinate) { return Err(LibError::OutOfBounds); }
         self.map[coordinate.0][coordinate.1] = Some(tile.clone());
+        Ok(())
     }
 
     pub fn set_multiple(
         &mut self,
         to_change: &Vec<(&Tile, ChartedCoordinate)>,
-    ) -> Result<(), (Tile, ChartedCoordinate)> {
+    ) -> Result<(), (LibError, Option<Tile>, ChartedCoordinate)> {
         for i in to_change {
             match self.set(i.0, i.1) {
-                | Ok(_) => {}
-                | Err(_) => {
-                    return Err((i.0.clone(), i.1));
+                | Ok(()) => {}
+                | Err((err, option)) => {
+                    return Err((err, option, i.1));
                 }
             }
         }
@@ -84,26 +94,34 @@ impl ChartedWorld {
     }
 
     // these names are getting out of hand...
-    pub fn set_multiple_unchecked(&mut self, to_change: &Vec<(&Tile, ChartedCoordinate)>) {
-        for i in to_change {
-            self.set_unchecked(i.0, i.1);
+    pub fn set_multiple_unchecked(&mut self, to_change: &Vec<(Tile, ChartedCoordinate)>) -> Result<(), (LibError, ChartedCoordinate)>{
+        for (tile, coordinate) in to_change.iter() {
+            match self.set_unchecked(tile, *coordinate) {
+                Ok(_) => {}
+                Err(err) => {return Err((err, *coordinate))}
+            }
         }
+        Ok(())
     }
 
-    pub fn update(&mut self, world: &World, coordinates: &Vec<ChartedCoordinate>) {
+    pub fn update(&mut self, world: &World, coordinates: &Vec<ChartedCoordinate>) -> Result<(), (LibError, ChartedCoordinate)>{
         let option = robot_map(world);
         if option.is_none() {
-            return;
+            return Err((LibError::OutOfBounds, ChartedCoordinate::default()));
         }
 
         let map = option.unwrap();
         for point in coordinates.iter() {
+            if !self.check_bounds(*point) {
+                return Err((LibError::OutOfBounds, *point))
+            }
             if map[point.0][point.1].is_some() && self.map[point.0][point.1] != map[point.0][point.1] {
                 self.map[point.0][point.1] = map[point.0][point.1].clone();
             } else if self.map[point.0][point.1].is_some() && map[point.0][point.1].is_none() {
                 self.map[point.0][point.1] = None;
             }
         }
+        Ok(())
     }
 
     pub fn update_viewed(&mut self, robot: &impl Runnable, world: &World) {
@@ -125,7 +143,7 @@ impl ChartedWorld {
         robot: &mut impl Runnable,
         world: &mut World,
         to_discover: &Vec<ChartedCoordinate>,
-    ) -> Result<HashMap<(usize, usize), Option<Tile>>, LibError> {
+    ) -> Result<HashMap<ChartedCoordinate, Option<Tile>>, LibError> {
         return match discover_tiles(
             robot,
             world,
@@ -135,13 +153,18 @@ impl ChartedWorld {
                 for ((x, y), tile) in hm.iter() {
                     self.map[*x][*y] = tile.clone();
                 }
-                Ok(hm)
+                Ok(hm
+                    .iter()
+                    .map(
+                        |(tuple, option)|
+                            (ChartedCoordinate::from(*tuple), option.clone()))
+                    .collect())
             }
             | Err(err) => Err(err),
         };
     }
 
-    pub fn update_all(&mut self, world: &World) {
+    pub fn update_all(&mut self, world: &World) -> Result<(), LibError> {
         let map = robot_map(world);
         if map.is_some() {
             let map = map.unwrap();
@@ -154,6 +177,9 @@ impl ChartedWorld {
                     }
                 }
             }
+            Ok(())
+        } else {
+            Err(LibError::OutOfBounds)
         }
     }
 }
