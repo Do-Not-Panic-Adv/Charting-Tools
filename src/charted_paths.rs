@@ -346,14 +346,9 @@ impl ChartedPaths {
     }
 
     fn check_boundaries(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> bool {
-        if (from.0 >= self.indexes.len())
-            || (from.1 >= self.indexes.len())
-            || (to.0 >= self.indexes.len())
-            || (to.1 >= self.indexes.len())
-        {
-            return false;
-        }
-        return true;
+        let x= self.indexes[from.0][from.1];
+        let y= self.indexes[to.0][to.1];
+        return x.is_some() && y.is_some();
     }
 
     fn index_to_coordinate(&self, node_index: &NodeIndex) -> Option<ChartedCoordinate> {
