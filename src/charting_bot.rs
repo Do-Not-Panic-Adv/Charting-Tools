@@ -177,21 +177,26 @@ impl ChartingBot {
         let mut discovered: usize = 0;
 
         for t in to_visit {
-            if !Self::check_discovered(world, t) {
-                match discover_tiles(robot, world, &[t]) {
+            match Self::check_discovered(world, t) {
+                | Ok(_) => match discover_tiles(robot, world, &[t]) {
                     | Ok(_) => discovered += 1,
                     | Err(e) => return Err(e),
-                }
+                },
+                | Err(e) => println!("Error while checking discovered tiles: {:?}", e),
             }
         }
         Ok(discovered)
     }
 
     /// Checks if a tile in a given coordinale is already present in the robots personal map.
-    pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> bool {
-        match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
-            | Some(_) => true,
-            | None => false,
+    pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> Result<bool, LibError> {
+        if coordinate.0 < robot_map(world).unwrap().len() && coordinate.1 < robot_map(world).unwrap()[0].len() {
+            match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
+                | Some(_) => Ok(false),
+                | None => Ok(false),
+            }
+        } else {
+            Err(LibError::OutOfBounds)
         }
     }
 
