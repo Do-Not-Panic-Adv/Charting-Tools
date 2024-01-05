@@ -346,14 +346,9 @@ impl ChartedPaths {
     }
 
     fn check_boundaries(&self, from: ChartedCoordinate, to: ChartedCoordinate) -> bool {
-        if (from.0 >= self.indexes.len())
-            || (from.1 >= self.indexes.len())
-            || (to.0 >= self.indexes.len())
-            || (to.1 >= self.indexes.len())
-        {
-            return false;
-        }
-        return true;
+        let x= self.indexes[from.0][from.1];
+        let y= self.indexes[to.0][to.1];
+        return x.is_some() && y.is_some();
     }
 
     fn index_to_coordinate(&self, node_index: &NodeIndex) -> Option<ChartedCoordinate> {
@@ -428,7 +423,7 @@ impl ChartedPaths {
                     let base_cost = tile_from.tile_type.properties().cost();
                     let base_cost = calculate_cost_go_with_environment(base_cost, env_cond, tile_from.tile_type) as u32;
                     if tile_from.elevation < tile_to.elevation {
-                        let elevation_cost = ((tile_from.elevation - tile_to.elevation) as i32).pow(2) as u32;
+                        let elevation_cost = (tile_to.elevation as i32 - tile_from.elevation as i32).pow(2) as u32;
                         return (base_cost + elevation_cost);
                     }
                     return base_cost;
