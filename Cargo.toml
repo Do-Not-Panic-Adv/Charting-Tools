@@ -10,3 +10,4 @@ readme = "README.md"
 robotics_lib = {registry = "kellnr"}
 petgraph = "0.6.4"
 lazy_static = "1.4.0"
+

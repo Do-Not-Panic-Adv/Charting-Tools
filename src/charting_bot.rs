@@ -39,7 +39,7 @@ impl ChartingBot {
     /// The starting position of the bot is set to the position of the Robot.
     pub fn init(&mut self, robot: &impl Runnable) {
         self.coordinates = ChartedCoordinate::from(robot.get_coordinate());
-        println!("Drone inizialiatto in posizione {:?}", self.coordinates)
+        println!("DiscoveryBot placed in {:?}", self.coordinates)
     }
 
     /// # Performs a line discovery
@@ -73,17 +73,20 @@ impl ChartingBot {
         width: usize,
         direction: Direction,
     ) -> Result<usize, LibError> {
-        //Calculates cost for the discovery
+        let world_dim = robot_map(world).unwrap()[0].len();
 
         let to_visit = match direction {
             | Direction::Up => {
                 let iter_x;
-                if self.coordinates.get_col() < 1 {
+                if self.coordinates.get_col() < width / 2 {
                     iter_x = 0..=self.coordinates.get_col() + width / 2;
                 } else {
-                    iter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
+                    if self.coordinates.get_col() + width / 2 > world_dim {
+                        iter_x = self.coordinates.get_col() - width / 2..=world_dim - 1;
+                    } else {
+                        iter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
+                    }
                 }
-
                 let iter_y;
                 let mut tiles: Vec<(usize, usize)> = vec![];
 
@@ -103,13 +106,17 @@ impl ChartingBot {
             | Direction::Down => {
                 let inter_x;
                 let inter_y;
-                if self.coordinates.get_col() < 1 {
+                if self.coordinates.get_col() < width / 2 {
                     inter_x = 0..=self.coordinates.get_col() + width / 2;
                 } else {
-                    inter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
+                    if self.coordinates.get_col() + width / 2 >= world_dim {
+                        inter_x = self.coordinates.get_col() - width / 2..=world_dim - 1;
+                    } else {
+                        inter_x = self.coordinates.get_col() - width / 2..=self.coordinates.get_col() + width / 2;
+                    }
                 }
-                if (self.coordinates.get_row() + length as usize - 1usize) >= robot_map(world).unwrap()[0].len() {
-                    inter_y = self.coordinates.get_row()..=robot_map(world).unwrap()[0].len() - 1
+                if (self.coordinates.get_row() + length as usize - 1usize) >= world_dim {
+                    inter_y = self.coordinates.get_row()..=world_dim - 1
                 } else {
                     inter_y = self.coordinates.get_row()..=self.coordinates.get_row() + length as usize - 1usize
                 }
@@ -127,10 +134,15 @@ impl ChartingBot {
                 let inter_y;
                 let inter_x;
 
-                if self.coordinates.get_row() < 1 {
+                if self.coordinates.get_row() < width / 2 {
                     inter_y = (0..=self.coordinates.get_row() + width / 2).rev();
                 } else {
-                    inter_y = (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
+                    if self.coordinates.get_row() + width / 2 >= world_dim {
+                        inter_y = (self.coordinates.get_row() - width / 2..=world_dim - 1).rev();
+                    } else {
+                        inter_y =
+                            (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
+                    }
                 }
 
                 if (self.coordinates.get_col() + length as usize - 1usize) >= robot_map(world).unwrap().len() {
@@ -151,10 +163,14 @@ impl ChartingBot {
                 let int_y;
                 let int_x;
 
-                if self.coordinates.get_row() < 1 {
+                if self.coordinates.get_row() < width / 2 {
                     int_y = (0..=self.coordinates.get_row() + width / 2).rev();
                 } else {
-                    int_y = (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
+                    if self.coordinates.get_row() + width / 2 >= world_dim {
+                        int_y = (self.coordinates.get_row() - width / 2..=world_dim).rev();
+                    } else {
+                        int_y = (self.coordinates.get_row() - width / 2..=self.coordinates.get_row() + width / 2).rev();
+                    }
                 }
 
                 if (self.coordinates.get_col() as i32 - length as i32) < 0 {
@@ -177,21 +193,26 @@ impl ChartingBot {
         let mut discovered: usize = 0;
 
         for t in to_visit {
-            if !Self::check_discovered(world, t) {
-                match discover_tiles(robot, world, &[t]) {
+            match Self::check_discovered(world, t) {
+                | Ok(_) => match discover_tiles(robot, world, &[t]) {
                     | Ok(_) => discovered += 1,
                     | Err(e) => return Err(e),
-                }
+                },
+                | Err(e) => println!("Error while checking discovered tiles: {:?}", e),
             }
         }
         Ok(discovered)
     }
 
     /// Checks if a tile in a given coordinale is already present in the robots personal map.
-    pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> bool {
-        match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
-            | Some(_) => true,
-            | None => false,
+    pub(crate) fn check_discovered(world: &World, coordinate: (usize, usize)) -> Result<bool, LibError> {
+        if coordinate.0 < robot_map(world).unwrap().len() && coordinate.1 < robot_map(world).unwrap()[0].len() {
+            match &robot_map(world).unwrap()[coordinate.0][coordinate.1] {
+                | Some(_) => Ok(false),
+                | None => Ok(false),
+            }
+        } else {
+            Err(LibError::OutOfBounds)
         }
     }
 
