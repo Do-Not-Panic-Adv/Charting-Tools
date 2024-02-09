@@ -83,7 +83,13 @@ impl ChartedPaths {
     ///     Robotic_lib provides a function called robot_map(..) that returns a matrix nxn in which
     ///     are "stored" the discovered tiles (seen or walked over) of the robot while
     ///     the other ones are set to None.
-    ///     The function takes this map as parameter and crate a weighted graph of tiles choosing only
+    ///     Additionally, if the discover_tiles function has been used used the robot map can contain
+    ///     tiles that the robot has not seen or walked over. IT is not guaranteed that the
+    ///     tool will be able to find a path for these tiles since they could be
+    ///     surrounded by unknown tiles and we don't know neither the cost neither if the robot can
+    ///     walk over them.
+    ///
+    ///     The function takes the map as parameter and crate a weighted graph of tiles choosing only
     ///     the tiles that the robot can walk over. The weight is relative to the actual
     ///     energy consumption. Since the cost is evaluated also with respect to the environmental
     ///     conditions is necessary to pass the World & reference
