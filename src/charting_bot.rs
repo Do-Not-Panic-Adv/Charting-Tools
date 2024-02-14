@@ -39,7 +39,7 @@ impl ChartingBot {
     /// The starting position of the bot is set to the position of the Robot.
     pub fn init(&mut self, robot: &impl Runnable) {
         self.coordinates = ChartedCoordinate::from(robot.get_coordinate());
-        println!("DiscoveryBot placed in {:?}", self.coordinates)
+        //println!("DiscoveryBot placed in {:?}", self.coordinates)
     }
 
     /// # Performs a line discovery
@@ -198,7 +198,7 @@ impl ChartingBot {
                     | Ok(_) => discovered += 1,
                     | Err(e) => return Err(e),
                 },
-                | Err(e) => println!("Error while checking discovered tiles: {:?}", e),
+                | Err(e) => return Err(e),
             }
         }
         Ok(discovered)
@@ -264,6 +264,6 @@ impl ChartingBot {
             | Direction::Left => self.coordinates.1 -= 1,
             | Direction::Right => self.coordinates.1 += 1,
         }
-        println!("DiscoveryBot moved to: {:?}", self.coordinates)
+        // println!("DiscoveryBot moved to: {:?}", self.coordinates)
     }
 }
