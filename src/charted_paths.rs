@@ -23,8 +23,11 @@ use crate::charted_coordinate::ChartedCoordinate;
 /// with fewer cost and what is the path to it.
 ///
 /// Nb: This tool is designed to be used "one shot" when needed,
-/// meaning that the the structure should be initialized in the process tick The reason behind
-/// this is that the discovered world and the costs change very quickly so keeping updated the graph
+/// meaning that the structure should be created, initialized and used in a unique operation, avoiding
+/// to be saved different process ticks (it can still work but with not updated results).
+/// NB: !!! DO NOT, in ANY CASE re-initialize the SAME struct many times, only one init per struct.
+/// The reason behind we took this approach is that the discovered world and the costs changes
+/// very quickly so keeping updated the graph
 /// would be not very efficient and not very useful.
 ///
 /// Let's analyze the fields of the struct:

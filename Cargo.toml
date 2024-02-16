@@ -1,6 +1,6 @@
 [package]
 name = "charting_tools"
-version = "1.0.7"
+version = "1.0.8"
 edition = "2021"
 authors = ["Enrico Dalla Cia", "Matteo Bregola", "Marco Pulze", "Riccardo Libanora"]
 description = "curated collection of utilities to help the robot navigate and discover the map while saving its important parts"
